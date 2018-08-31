@@ -22,9 +22,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import javax.inject.Inject;
+
+import com.google.common.collect.Lists;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.myriad.configuration.MyriadConfiguration;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,15 +51,15 @@ public class ReconcileService {
     this.cfg = cfg;
   }
 
-  public void reconcile(SchedulerDriver driver) {
-    Collection<Protos.TaskStatus> taskStatuses = state.getTaskStatuses();
+  public void reconcile(MesosDriver driver) {
+    Collection<MesosV1.TaskStatus> taskStatuses = state.getTaskStatuses();
 
     if (taskStatuses.size() == 0) {
       return;
     }
     LOGGER.info("Reconciling {} tasks.", taskStatuses.size());
 
-    driver.reconcileTasks(taskStatuses);
+    driver.reconcileTasks(Lists.newArrayList(taskStatuses));
 
     lastReconcileTime = new Date();
 
@@ -68,14 +72,14 @@ public class ReconcileService {
       } catch (InterruptedException e) {
         LOGGER.error("Interrupted", e);
       }
-      Collection<Protos.TaskStatus> notYetReconciled = new ArrayList<>();
-      for (Protos.TaskStatus status : state.getTaskStatuses()) {
+      Collection<MesosV1.TaskStatus> notYetReconciled = new ArrayList<>();
+      for (MesosV1.TaskStatus status : state.getTaskStatuses()) {
         if (status.getTimestamp() < lastReconcileTime.getTime()) {
           notYetReconciled.add(status);
         }
       }
       LOGGER.info("Reconcile attempt {} for {} tasks", attempt, notYetReconciled.size());
-      driver.reconcileTasks(notYetReconciled);
+      driver.reconcileTasks(Lists.newArrayList(notYetReconciled));
       lastReconcileTime = new Date();
       attempt++;
     }

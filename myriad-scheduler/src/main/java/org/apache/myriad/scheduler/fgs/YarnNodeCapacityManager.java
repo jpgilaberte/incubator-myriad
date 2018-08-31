@@ -44,8 +44,8 @@ import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.NodeResourc
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.NodeUpdateSchedulerEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.SchedulerEvent;
 import org.apache.hadoop.yarn.util.resource.Resources;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.NodeManagerConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.executor.ContainerTaskStatusRequest;
 import org.apache.myriad.scheduler.MyriadDriver;
 import org.apache.myriad.scheduler.ResourceUtils;
@@ -111,8 +111,10 @@ public class YarnNodeCapacityManager extends BaseInterceptor {
     };
   }
 
-  private Protos.TaskID containerToTaskId(RMContainer container) {
-    return Protos.TaskID.newBuilder().setValue("yarn_" + container.getContainerId()).build();
+  private MesosV1.TaskID containerToTaskId(RMContainer container) {
+    MesosV1.TaskID taskId = new MesosV1.TaskID();
+    taskId.setValue("yarn_" + container.getContainerId());
+    return taskId;
   }
 
   @Override
@@ -130,7 +132,7 @@ public class YarnNodeCapacityManager extends BaseInterceptor {
 
   private void removeYarnTask(RMContainer rmContainer) {
     if (containersNotNull(rmContainer)){
-      Protos.TaskID taskId = containerToTaskId(rmContainer);
+      MesosV1.TaskID taskId = containerToTaskId(rmContainer);
       /*
        * Mark the task as killable within the ServerState object to flag the task 
        * for the TaskTerminator daemon to kill the task
@@ -218,7 +220,7 @@ public class YarnNodeCapacityManager extends BaseInterceptor {
 
     if (containersAllocatedByMesosOffer.isEmpty()) {
       LOGGER.debug("No containers allocated using Mesos offers for host: {}", host);
-      for (Protos.Offer offer : consumedOffer.getOffers()) {
+      for (MesosV1.Offer offer : consumedOffer.getOffers()) {
         offerLifecycleMgr.declineOffer(offer);
       }
       decrementNodeCapacity(rmNode, OfferUtils.getYarnResourcesFromMesosOffers(consumedOffer.getOffers()));
@@ -226,7 +228,7 @@ public class YarnNodeCapacityManager extends BaseInterceptor {
       LOGGER.debug("Containers allocated using Mesos offers for host: {} count: {}", host, containersAllocatedByMesosOffer.size());
 
       // Identify the Mesos tasks that need to be launched
-      List<Protos.TaskInfo> tasks = Lists.newArrayList();
+      List<MesosV1.TaskInfo> tasks = Lists.newArrayList();
       Resource resUsed = Resource.newInstance(0, 0);
 
       for (RMContainer newContainer : containersAllocatedByMesosOffer) {
@@ -238,7 +240,7 @@ public class YarnNodeCapacityManager extends BaseInterceptor {
       Resource resOffered = OfferUtils.getYarnResourcesFromMesosOffers(consumedOffer.getOffers());
       Resource resUnused = Resources.subtract(resOffered, resUsed);
       decrementNodeCapacity(rmNode, resUnused);
-      myriadDriver.getDriver().launchTasks(consumedOffer.getOfferIds(), tasks);
+      myriadDriver.getDriver().launchTasks(Lists.newArrayList(consumedOffer.getOfferIds()), tasks, null);
     }
 
     // No need to hold on to the snapshot anymore
@@ -307,28 +309,32 @@ public class YarnNodeCapacityManager extends BaseInterceptor {
     }
   }
 
-  private Protos.TaskInfo getTaskInfoForContainer(RMContainer rmContainer, ConsumedOffer consumedOffer, Node node) {
+  private MesosV1.TaskInfo getTaskInfoForContainer(RMContainer rmContainer, ConsumedOffer consumedOffer, Node node) {
 
-    Protos.Offer offer = consumedOffer.getOffers().get(0);
+    MesosV1.Offer offer = consumedOffer.getOffers().get(0);
     Container container = rmContainer.getContainer();
-    Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(
-        ContainerTaskStatusRequest.YARN_CONTAINER_TASK_ID_PREFIX + container.getId().toString()).build();
+
+    MesosV1.TaskID taskId = new MesosV1.TaskID();
+    taskId.setValue(ContainerTaskStatusRequest.YARN_CONTAINER_TASK_ID_PREFIX + container.getId().toString());
 
     // TODO (sdaingade) Remove ExecutorInfo from the Node object
     // as this is now cached in the NodeTask object in scheduler state.
-    Protos.ExecutorInfo executorInfo = node.getExecInfo();
+    MesosV1.ExecutorInfo executorInfo = node.getExecInfo();
     if (executorInfo == null) {
-      executorInfo = Protos.ExecutorInfo.newBuilder(state.getNodeTask(offer.getSlaveId(), NodeManagerConfiguration.DEFAULT_NM_TASK_PREFIX)
-          .getExecutorInfo()).setFrameworkId(offer.getFrameworkId()).build();
+      executorInfo = state.getNodeTask(offer.getAgent_id(), NodeManagerConfiguration.DEFAULT_NM_TASK_PREFIX).getExecutorInfo();
+      executorInfo.setFramework_id(offer.getFramework_id());
       node.setExecInfo(executorInfo);
     }
 
-    return Protos.TaskInfo.newBuilder()
-        .setName("task_" + taskId.getValue()).setTaskId(taskId)
-        .setSlaveId(offer.getSlaveId())
-        .addAllResources(taskUtils.getScalarResource(offer, "cpus", (double) container.getResource().getVirtualCores(), 0.0))
-        .addAllResources(taskUtils.getScalarResource(offer, "mem", (double) container.getResource().getMemory(), 0.0))
-        .setExecutor(executorInfo)
-        .build();
+    MesosV1.TaskInfo taskInfo = new MesosV1.TaskInfo();
+    taskInfo.setName("task_" + taskId.getValue());
+    taskInfo.setTask_id(taskId);
+    taskInfo.setAgent_id(offer.getAgent_id());
+
+    taskInfo.setResources(Lists.<MesosV1.Resource>newArrayList());
+    taskInfo.getResources().addAll(taskUtils.getScalarResource(offer, "cpus", (double) container.getResource().getVirtualCores(), 0.0));
+    taskInfo.getResources().addAll(taskUtils.getScalarResource(offer, "mem", (double) container.getResource().getMemory(), 0.0));
+    taskInfo.setExecutor(executorInfo);
+    return taskInfo;
   }
 }

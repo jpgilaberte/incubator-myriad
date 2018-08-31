@@ -30,6 +30,7 @@ import org.apache.myriad.configuration.MyriadBadConfigurationException;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.NodeManagerConfiguration;
 import org.apache.myriad.configuration.ServiceConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.policy.NodeScaleDownPolicy;
 import org.apache.myriad.scheduler.constraints.Constraint;
 import org.apache.myriad.scheduler.constraints.LikeConstraint;
@@ -163,9 +164,9 @@ public class MyriadOperations {
 
     // Flex down Pending tasks, if any
     if (numScaledDown < numInstancesToScaleDown) {
-      Collection<Protos.TaskID> pendingTasks = this.schedulerState.getPendingTaskIds(serviceName);
+      Collection<MesosV1.TaskID> pendingTasks = this.schedulerState.getPendingTaskIds(serviceName);
 
-      for (Protos.TaskID taskId : pendingTasks) {
+      for (MesosV1.TaskID taskId : pendingTasks) {
         this.schedulerState.makeTaskKillable(taskId);
         numScaledDown++;
         if (numScaledDown >= numInstancesToScaleDown) {
@@ -177,9 +178,9 @@ public class MyriadOperations {
 
     // Flex down Staging tasks, if any
     if (numScaledDown < numInstancesToScaleDown) {
-      Collection<Protos.TaskID> stagingTasks = this.schedulerState.getStagingTaskIds(serviceName);
+      Collection<MesosV1.TaskID> stagingTasks = this.schedulerState.getStagingTaskIds(serviceName);
 
-      for (Protos.TaskID taskId : stagingTasks) {
+      for (MesosV1.TaskID taskId : stagingTasks) {
         this.schedulerState.makeTaskKillable(taskId);
         numScaledDown++;
         if (numScaledDown >= numInstancesToScaleDown) {
@@ -193,10 +194,10 @@ public class MyriadOperations {
     Set<NodeTask> activeTasks = this.schedulerState.getActiveTasksByType(serviceName);
     if (numScaledDown < numInstancesToScaleDown) {
       for (NodeTask nodeTask : activeTasks) {
-        this.schedulerState.makeTaskKillable(nodeTask.getTaskStatus().getTaskId());
+        this.schedulerState.makeTaskKillable(nodeTask.getTaskStatus().getTask_id());
         numScaledDown++;
         if (LOGGER.isDebugEnabled()) {
-          LOGGER.debug("Marked NodeTask {} on host {} for kill.", nodeTask.getTaskStatus().getTaskId(), nodeTask.getHostname());
+          LOGGER.debug("Marked NodeTask {} on host {} for kill.", nodeTask.getTaskStatus().getTask_id(), nodeTask.getHostname());
         }
         if (numScaledDown >= numInstancesToScaleDown) {
           break;
@@ -220,17 +221,17 @@ public class MyriadOperations {
 
   private int flexDownActiveTasks(ServiceResourceProfile profile, Constraint constraint, int numInstancesToScaleDown) {
     if (numInstancesToScaleDown > 0) {
-      List<Protos.TaskID> activeTasksForProfile = Lists.newArrayList(schedulerState.getActiveTaskIDsForProfile(profile));
+      List<MesosV1.TaskID> activeTasksForProfile = Lists.newArrayList(schedulerState.getActiveTaskIDsForProfile(profile));
       nodeScaleDownPolicy.apply(activeTasksForProfile);
       return flexDownTasks(activeTasksForProfile, profile, constraint, numInstancesToScaleDown);
     }
     return 0;
   }
 
-  private int flexDownTasks(Collection<Protos.TaskID> taskIDs, ServiceResourceProfile profile, Constraint constraint,
+  private int flexDownTasks(Collection<MesosV1.TaskID> taskIDs, ServiceResourceProfile profile, Constraint constraint,
                             int numInstancesToScaleDown) {
     int numInstancesScaledDown = 0;
-    for (Protos.TaskID taskID : taskIDs) {
+    for (MesosV1.TaskID taskID : taskIDs) {
       NodeTask nodeTask = schedulerState.getTask(taskID);
       if (nodeTask.getProfile().getName().equals(profile.getName()) && meetsConstraint(nodeTask, constraint)) {
         this.schedulerState.makeTaskKillable(taskID);
@@ -275,9 +276,9 @@ public class MyriadOperations {
    */
   public void shutdownFramework() {
     LOGGER.info("Received request to shutdown Myriad Framework..");
-    Status driverStatus = driverManager.getDriverStatus();
+    MesosV1.Status driverStatus = driverManager.getDriverStatus();
 
-    if (Status.DRIVER_RUNNING != driverStatus) {
+    if (MesosV1.Status.DRIVER_RUNNING != driverStatus) {
       LOGGER.warn("Driver is not running. Status: " + driverStatus);
     } else {
       // Stop the driver, tasks, and executor.

@@ -21,6 +21,7 @@ package org.apache.myriad.scheduler.event.handlers;
 import com.lmax.disruptor.EventHandler;
 import org.apache.mesos.Protos.ExecutorID;
 import org.apache.mesos.Protos.SlaveID;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.event.FrameworkMessageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +34,8 @@ public class FrameworkMessageEventHandler implements EventHandler<FrameworkMessa
 
   @Override
   public void onEvent(FrameworkMessageEvent event, long sequence, boolean endOfBatch) throws Exception {
-    ExecutorID executorId = event.getExecutorId();
-    SlaveID slaveId = event.getSlaveId();
+    MesosV1.ExecutorID executorId = event.getExecutorId();
+    MesosV1.AgentID slaveId = event.getSlaveId();
     LOGGER.info("Received framework message from executor {} of slave {}", executorId, slaveId);
   }
 

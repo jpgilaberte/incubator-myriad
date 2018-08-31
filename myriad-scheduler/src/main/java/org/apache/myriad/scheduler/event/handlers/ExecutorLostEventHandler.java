@@ -19,8 +19,7 @@
 package org.apache.myriad.scheduler.event.handlers;
 
 import com.lmax.disruptor.EventHandler;
-import org.apache.mesos.Protos.ExecutorID;
-import org.apache.mesos.Protos.SlaveID;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.event.ExecutorLostEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +32,8 @@ public class ExecutorLostEventHandler implements EventHandler<ExecutorLostEvent>
 
   @Override
   public void onEvent(ExecutorLostEvent event, long sequence, boolean endOfBatch) throws Exception {
-    ExecutorID executorId = event.getExecutorId();
-    SlaveID slaveId = event.getSlaveId();
+    MesosV1.ExecutorID executorId = event.getExecutorId();
+    MesosV1.AgentID slaveId = event.getSlaveId();
     int exitStatus = event.getExitStatus();
     LOGGER.info("Executor {} of slave {} lost with exit status: {}", executorId, slaveId, exitStatus);
   }

@@ -20,18 +20,19 @@ package org.apache.myriad.scheduler.fgs;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Feed of Mesos offers for a node.
  */
 public class OfferFeed {
-  private ConcurrentLinkedQueue<Protos.Offer> queue;
+  private ConcurrentLinkedQueue<MesosV1.Offer> queue;
 
   public OfferFeed() {
     this.queue = new ConcurrentLinkedQueue<>();
   }
 
-  public void add(Protos.Offer offer) {
+  public void add(MesosV1.Offer offer) {
     queue.add(offer);
   }
 
@@ -39,7 +40,7 @@ public class OfferFeed {
    * Retrieves and removes the head of the feed, or returns NULL if the feed is
    * empty.
    */
-  public Protos.Offer poll() {
+  public MesosV1.Offer poll() {
     return queue.poll();
   }
 }

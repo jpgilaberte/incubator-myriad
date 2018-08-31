@@ -18,29 +18,29 @@
  */
 package org.apache.myriad.scheduler.event;
 
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Mesos re-register event
  */
 public class ReRegisteredEvent {
-  private SchedulerDriver driver;
-  private Protos.MasterInfo masterInfo;
+  private MesosDriver driver;
+  private MesosV1.MasterInfo masterInfo;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 
-  public Protos.MasterInfo getMasterInfo() {
+  public MesosV1.MasterInfo getMasterInfo() {
     return masterInfo;
   }
 
-  public void setMasterInfo(Protos.MasterInfo masterInfo) {
+  public void setMasterInfo(MesosV1.MasterInfo masterInfo) {
     this.masterInfo = masterInfo;
   }
 }

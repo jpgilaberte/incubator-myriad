@@ -21,6 +21,7 @@ package org.apache.myriad.scheduler.resource;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,10 +57,10 @@ class ScalarResource {
     return defaultValue + roleValue >= value;
   }
 
-  public List<Protos.Resource> consumeResource(Double value) {
+  public List<MesosV1.Resource> consumeResource(Double value) {
     Preconditions.checkState(roleValue + defaultValue >= value, String.format("%s value requested: %f, greater " +
         "than amount held %f", name, value, roleValue + defaultValue));
-    List<Protos.Resource> resources = new ArrayList<>();
+    List<MesosV1.Resource> resources = new ArrayList<>();
     if (roleValue >= value) {
       roleValue -= value;
       resources.add(createResource(name, value, true));
@@ -75,14 +76,16 @@ class ScalarResource {
     return resources;
   }
 
-  private Protos.Resource createResource(String name, Double value, boolean withRole) {
-    Protos.Resource.Builder builder = Protos.Resource.newBuilder()
-        .setName(name)
-        .setScalar(Protos.Value.Scalar.newBuilder().setValue(value))
-        .setType(Protos.Value.Type.SCALAR);
+  private MesosV1.Resource createResource(String name, Double value, boolean withRole) {
+    MesosV1.Resource resource = new MesosV1.Resource();
+    MesosV1.Value.Scalar scalar = new MesosV1.Value.Scalar();
+    scalar.setValue(value);
+    resource.setName(name);
+    resource.setScalar(scalar);
+    resource.setType(MesosV1.Value.Type.SCALAR);
     if (withRole) {
-      builder.setRole(role);
+      resource.setRole(role);
     }
-    return builder.build();
+    return resource;
   }
 }

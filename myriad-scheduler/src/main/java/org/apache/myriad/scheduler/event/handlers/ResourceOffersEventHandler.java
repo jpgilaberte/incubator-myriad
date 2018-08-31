@@ -18,6 +18,7 @@
  */
 package org.apache.myriad.scheduler.event.handlers;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.lmax.disruptor.EventHandler;
 
@@ -31,6 +32,8 @@ import org.apache.mesos.Protos.Offer;
 import org.apache.mesos.Protos.TaskInfo;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.myriad.configuration.MyriadConfiguration;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.SchedulerUtils;
 import org.apache.myriad.scheduler.ServiceResourceProfile;
 import org.apache.myriad.scheduler.TaskFactory;
@@ -70,16 +73,16 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
 
   @Override
   public void onEvent(ResourceOffersEvent event, long sequence, boolean endOfBatch) throws Exception {
-    SchedulerDriver driver = event.getDriver();
-    List<Offer> offers = event.getOffers();
+    MesosDriver driver = event.getDriver();
+    List<MesosV1.Offer> offers = event.getOffers();
 
     // Sometimes, we see that mesos sends resource offers before Myriad receives
     // a notification for "framework registration". This is a simple defensive code
     // to not process any offers unless Myriad receives a "framework registered" notification.
     if (schedulerState.getFrameworkID() == null) {
       LOGGER.warn("Received {} offers, but declining them since Framework ID is not yet set", offers.size());
-      for (Offer offer : offers) {
-        driver.declineOffer(offer.getId());
+      for (MesosV1.Offer offer : offers) {
+        driver.declineOffer(Arrays.asList(offer.getId()), null);
       }
       return;
     }
@@ -87,10 +90,10 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
     LOGGER.debug("Pending tasks: {}", this.schedulerState.getPendingTaskIds());
 
     // Let Myriad use reserved resources firstly.
-    Collections.sort(offers, new Comparator<Offer>() {
-      boolean isReserved(Offer o) {
-        for (Protos.Resource resource : o.getResourcesList()) {
-          if (resource.hasRole() && !Objects.equals(resource.getRole(), DEFAULT_ROLE)) {
+    Collections.sort(offers, new Comparator<MesosV1.Offer>() {
+      boolean isReserved(MesosV1.Offer o) {
+        for (MesosV1.Resource resource : o.getResources()) {
+          if (resource.getRole() != null && !Objects.equals(resource.getRole(), DEFAULT_ROLE)) {
             return true;
           }
         }
@@ -98,7 +101,7 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
       }
 
       @Override
-      public int compare(Offer o1, Offer o2) {
+      public int compare(MesosV1.Offer o1, MesosV1.Offer o2) {
         boolean reserved1 = isReserved(o1);
         boolean reserved2 = isReserved(o2);
 
@@ -112,19 +115,19 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
 
     driverOperationLock.lock();
     try {
-      for (Iterator<Offer> iterator = offers.iterator(); iterator.hasNext(); ) {
-        Offer offer = iterator.next();
-        Set<NodeTask> nodeTasks = schedulerState.getNodeTasks(offer.getSlaveId());
+      for (Iterator<MesosV1.Offer> iterator = offers.iterator(); iterator.hasNext(); ) {
+        MesosV1.Offer offer = iterator.next();
+        Set<NodeTask> nodeTasks = schedulerState.getNodeTasks(offer.getAgent_id());
         for (NodeTask nodeTask : nodeTasks) {
-          nodeTask.setSlaveAttributes(offer.getAttributesList());
+          nodeTask.setSlaveAttributes(offer.getAttributes());
         }
         // keep this in case SchedulerState gets out of sync. This should not happen with
         // synchronizing addNodes method in SchedulerState
         // but to keep it safe
-        final Set<Protos.TaskID> missingTasks = Sets.newHashSet();
-        Set<Protos.TaskID> pendingTasks = schedulerState.getPendingTaskIds();
+        final Set<MesosV1.TaskID> missingTasks = Sets.newHashSet();
+        Set<MesosV1.TaskID> pendingTasks = schedulerState.getPendingTaskIds();
         if (CollectionUtils.isNotEmpty(pendingTasks)) {
-          for (Protos.TaskID pendingTaskId : pendingTasks) {
+          for (MesosV1.TaskID pendingTaskId : pendingTasks) {
             NodeTask taskToLaunch = schedulerState.getTask(pendingTaskId);
             if (taskToLaunch == null) {
               missingTasks.add(pendingTaskId);
@@ -143,11 +146,11 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
             if (SchedulerUtils.isUniqueHostname(offer, taskToLaunch, launchedTasks)
                 && resourceOfferContainer.satisfies(taskToLaunch.getProfile(), constraint)) {
               try {
-                final TaskInfo task = taskFactoryMap.get(taskPrefix).createTask(resourceOfferContainer,
-                    schedulerState.getFrameworkID().get(), pendingTaskId, taskToLaunch);
-                LOGGER.info("Launching task: {} using offer: {}", task.getTaskId().getValue(), offer.getId());
+                final MesosV1.TaskInfo task = taskFactoryMap.get(taskPrefix).createTask(resourceOfferContainer,
+                    schedulerState.getFrameworkID(), pendingTaskId, taskToLaunch);
+                LOGGER.info("Launching task: {} using offer: {}", task.getTask_id().getValue(), offer.getId());
                 LOGGER.debug("Launching task: {} with profile: {} using offer: {}", task, profile, offer);
-                driver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(task));
+                driver.launchTasks(Lists.newArrayList(offer.getId()), Lists.newArrayList(task), null);
                 schedulerState.makeTaskStaging(pendingTaskId);
                 // For every NM Task that we launch, we currently
                 // need to backup the ExecutorInfo for that NM Task in the State Store.
@@ -155,7 +158,7 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
                 // containers. This is specially important in case the RM restarts.
                 taskToLaunch.setExecutorInfo(task.getExecutor());
                 taskToLaunch.setHostname(offer.getHostname());
-                taskToLaunch.setSlaveId(offer.getSlaveId());
+                taskToLaunch.setSlaveId(offer.getAgent_id());
                 schedulerState.addTask(pendingTaskId, taskToLaunch);
                 iterator.remove(); // remove the used offer from offers list
                 break;
@@ -164,13 +167,13 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
               }
             }
           }
-          for (Protos.TaskID taskId : missingTasks) {
+          for (MesosV1.TaskID taskId : missingTasks) {
             schedulerState.removeTask(taskId);
           }
         }
       }
 
-      for (Offer offer : offers) {
+      for (MesosV1.Offer offer : offers) {
         if (SchedulerUtils.isEligibleForFineGrainedScaling(offer.getHostname(), schedulerState)) {
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Picking an offer from slave with hostname {} for fine grained scaling.", offer.getHostname());
@@ -180,7 +183,7 @@ public class ResourceOffersEventHandler implements EventHandler<ResourceOffersEv
           if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Declining offer {} from slave {}.", offer, offer.getHostname());
           }
-          driver.declineOffer(offer.getId());
+          driver.declineOffer(Lists.newArrayList(offer.getId()), null);
         }
       }
     } finally {

@@ -22,9 +22,9 @@ import com.google.common.base.Preconditions;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import javax.inject.Inject;
-import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.Status;
 import org.apache.mesos.Protos.TaskID;
+import org.apache.myriad.driver.model.MesosV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,16 +35,16 @@ public class MyriadDriverManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(MyriadDriverManager.class);
   private final Lock driverLock;
   private MyriadDriver driver;
-  private Status driverStatus;
+  private MesosV1.Status driverStatus;
 
   @Inject
   public MyriadDriverManager(MyriadDriver driver) {
     this.driver = driver;
     this.driverLock = new ReentrantLock();
-    this.driverStatus = Protos.Status.DRIVER_NOT_STARTED;
+    this.driverStatus = MesosV1.Status.DRIVER_NOT_STARTED;
   }
 
-  public Status startDriver() {
+  public MesosV1.Status startDriver() {
     this.driverLock.lock();
     try {
       Preconditions.checkState(this.isStartable());
@@ -63,7 +63,7 @@ public class MyriadDriverManager {
    *
    * @return driver status
    */
-  public Status stopDriver(boolean failover) {
+  public MesosV1.Status stopDriver(boolean failover) {
     this.driverLock.lock();
     try {
       if (isRunning()) {
@@ -86,7 +86,7 @@ public class MyriadDriverManager {
    *
    * @return driver status
    */
-  public Status abortDriver() {
+  public MesosV1.Status abortDriver() {
     this.driverLock.lock();
     try {
       if (isRunning()) {
@@ -100,12 +100,12 @@ public class MyriadDriverManager {
     return driverStatus;
   }
 
-  public Status kill(final TaskID taskId) {
+  public MesosV1.Status kill(final MesosV1.TaskID taskId, final MesosV1.AgentID agent_id, final MesosV1.KillPolicy kill_policy) {
     LOGGER.info("Killing task {}", taskId);
     this.driverLock.lock();
     try {
       if (isRunning()) {
-        this.driverStatus = driver.kill(taskId);
+        this.driverStatus = driver.kill(taskId, agent_id, kill_policy);
         LOGGER.info("Task {} killed with status: {}", taskId, this.driverStatus);
       } else {
         LOGGER.warn("Cannot kill task, driver is not running");
@@ -117,15 +117,15 @@ public class MyriadDriverManager {
     return driverStatus;
   }
 
-  public Status getDriverStatus() {
+  public MesosV1.Status getDriverStatus() {
     return this.driverStatus;
   }
 
   private boolean isStartable() {
-    return this.driver != null && this.driverStatus == Status.DRIVER_NOT_STARTED;
+    return this.driver != null && this.driverStatus == MesosV1.Status.DRIVER_NOT_STARTED;
   }
 
   private boolean isRunning() {
-    return this.driver != null && this.driverStatus == Status.DRIVER_RUNNING;
+    return this.driver != null && this.driverStatus == MesosV1.Status.DRIVER_RUNNING;
   }
 }

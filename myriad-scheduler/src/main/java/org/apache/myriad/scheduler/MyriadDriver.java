@@ -22,6 +22,8 @@ import javax.inject.Inject;
 import org.apache.mesos.Protos.Status;
 import org.apache.mesos.Protos.TaskID;
 import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +34,10 @@ import org.slf4j.LoggerFactory;
 public class MyriadDriver {
   private static final Logger LOGGER = LoggerFactory.getLogger(MyriadDriver.class);
 
-  private final SchedulerDriver driver;
+  private final MesosDriver driver;
 
   @Inject
-  public MyriadDriver(SchedulerDriver driver) {
+  public MyriadDriver(MesosDriver driver) {
     this.driver = driver;
   }
 
@@ -52,9 +54,9 @@ public class MyriadDriver {
    *
    * @see Status
    */
-  public Status stop(boolean failover) {
+  public MesosV1.Status stop(boolean failover) {
     LOGGER.info("Stopping driver");
-    Status status = driver.stop(failover);
+    MesosV1.Status status = driver.stop(failover);
     LOGGER.info("Driver stopped with status: {}", status);
     return status;
   }
@@ -67,9 +69,9 @@ public class MyriadDriver {
    *
    * @see Status
    */
-  public Status start() {
+  public MesosV1.Status start() {
     LOGGER.info("Starting driver");
-    Status status = driver.start();
+    MesosV1.Status status = driver.start();
     LOGGER.info("Driver started with status: {}", status);
     return status;
   }
@@ -88,8 +90,8 @@ public class MyriadDriver {
    * 
    * @see Status
    */  
-  public Status kill(final TaskID taskId) {
-    Status status = driver.killTask(taskId);
+  public MesosV1.Status kill(final MesosV1.TaskID taskId, final MesosV1.AgentID agent_id, final MesosV1.KillPolicy kill_policy) {
+    MesosV1.Status status = driver.killTask(taskId, agent_id, kill_policy);
     LOGGER.info("Task {} kill initiated with Driver status  {}", taskId, status);    
     return status;
   }
@@ -105,9 +107,9 @@ public class MyriadDriver {
    * 
    * @see Status
    */  
-  public Status abort() {
+  public MesosV1.Status abort() {
     LOGGER.info("Aborting driver");
-    Status status = driver.abort();
+    MesosV1.Status status = driver.abort();
     LOGGER.info("Aborted driver with status: {}", status);
     return status;
   }
@@ -118,7 +120,7 @@ public class MyriadDriver {
    * 
    * @return the underlying Mesos SchedulerDriver
    */
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 }

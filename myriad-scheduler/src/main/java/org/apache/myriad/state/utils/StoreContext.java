@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskID;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.state.NodeTask;
 
 /**
@@ -63,9 +64,9 @@ public final class StoreContext {
    * @param lostTasks
    * @param killableTasks
    */
-  public StoreContext(Protos.FrameworkID frameworkId, Map<Protos.TaskID, NodeTask> tasks, Set<Protos.TaskID> pendingTasks,
-                      Set<Protos.TaskID> stagingTasks, Set<Protos.TaskID> activeTasks, Set<Protos.TaskID> lostTasks,
-                      Set<Protos.TaskID> killableTasks) {
+  public StoreContext(MesosV1.FrameworkID frameworkId, Map<MesosV1.TaskID, NodeTask> tasks, Set<MesosV1.TaskID> pendingTasks,
+                      Set<MesosV1.TaskID> stagingTasks, Set<MesosV1.TaskID> activeTasks, Set<MesosV1.TaskID> lostTasks,
+                      Set<MesosV1.TaskID> killableTasks) {
     setFrameworkId(frameworkId);
     setTasks(tasks);
     setPendingTasks(pendingTasks);
@@ -150,30 +151,32 @@ public final class StoreContext {
    *
    * @param tasks
    */
-  public void setTasks(Map<Protos.TaskID, NodeTask> tasks) {
+  public void setTasks(Map<MesosV1.TaskID, NodeTask> tasks) {
     taskIds = new ArrayList<ByteBuffer>(tasks.size());
     taskNodes = new ArrayList<ByteBuffer>(tasks.size());
-    for (Entry<TaskID, NodeTask> entry : tasks.entrySet()) {
-      taskIds.add(ByteBufferSupport.toByteBuffer(entry.getKey()));
+    for (Entry<MesosV1.TaskID, NodeTask> entry : tasks.entrySet()) {
+      //TODO:here
+      //taskIds.add(ByteBufferSupport.toByteBuffer(entry.getKey()));
       taskNodes.add(ByteBufferSupport.toByteBuffer(entry.getValue()));
     }
   }
 
   /**
-   * De-serialize the internal ByteBuffer back into a Protos.FrameworkID.
+   * De-serialize the internal ByteBuffer back into a MesosV1.FrameworkID.
    *
    * @return
    */
-  public Protos.FrameworkID getFrameworkId() {
-    return ByteBufferSupport.toFrameworkID(frameworkId);
+  public MesosV1.FrameworkID getFrameworkId() {
+    return null;
+    //return ByteBufferSupport.toFrameworkID(frameworkId);
   }
 
   /**
-   * Serialize the Protos.FrameworkID into a ByteBuffer.
+   * Serialize the MesosV1.FrameworkID into a ByteBuffer.
    */
-  public void setFrameworkId(Protos.FrameworkID frameworkId) {
+  public void setFrameworkId(MesosV1.FrameworkID frameworkId) {
     if (frameworkId != null) {
-      this.frameworkId = ByteBufferSupport.toByteBuffer(frameworkId);
+      //this.frameworkId = ByteBufferSupport.toByteBuffer(frameworkId);
     }
   }
 
@@ -182,96 +185,99 @@ public final class StoreContext {
    *
    * @return
    */
-  public Map<Protos.TaskID, NodeTask> getTasks() {
-    Map<Protos.TaskID, NodeTask> map = null;
+  public Map<MesosV1.TaskID, NodeTask> getTasks() {
+    Map<MesosV1.TaskID, NodeTask> map = null;
     if (taskIds != null) {
-      map = new HashMap<Protos.TaskID, NodeTask>(taskIds.size());
+      map = new HashMap<MesosV1.TaskID, NodeTask>(taskIds.size());
       int idx = 0;
       for (ByteBuffer bb : taskIds) {
-        final Protos.TaskID taskId = ByteBufferSupport.toTaskId(bb);
-        final NodeTask task = ByteBufferSupport.toNodeTask(taskNodes.get(idx++));
-        if (task.getTaskPrefix() == null && taskId != null) {
-          String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
-          task.setTaskPrefix(taskPrefix);
-        }
-        map.put(taskId, task);
+//TODO:here
+        //        final MesosV1.TaskID taskId = ByteBufferSupport.toTaskId(bb);
+//        final NodeTask task = ByteBufferSupport.toNodeTask(taskNodes.get(idx++));
+//        if (task.getTaskPrefix() == null && taskId != null) {
+//          String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
+//          task.setTaskPrefix(taskPrefix);
+//        }
+//        map.put(taskId, task);
       }
     } else {
-      map = new HashMap<Protos.TaskID, NodeTask>(0);
+      map = new HashMap<MesosV1.TaskID, NodeTask>(0);
     }
     return map;
   }
 
-  public void setPendingTasks(Set<Protos.TaskID> tasks) {
+  public void setPendingTasks(Set<MesosV1.TaskID> tasks) {
     if (tasks != null) {
       pendingTasks = new ArrayList<ByteBuffer>(tasks.size());
       toTaskBuffer(tasks, pendingTasks);
     }
   }
 
-  public Set<Protos.TaskID> getPendingTasks() {
+  public Set<MesosV1.TaskID> getPendingTasks() {
     return toTaskSet(pendingTasks);
   }
 
-  public void setStagingTasks(Set<Protos.TaskID> tasks) {
+  public void setStagingTasks(Set<MesosV1.TaskID> tasks) {
     if (tasks != null) {
       stagingTasks = new ArrayList<ByteBuffer>(tasks.size());
       toTaskBuffer(tasks, stagingTasks);
     }
   }
 
-  public Set<Protos.TaskID> getStagingTasks() {
+  public Set<MesosV1.TaskID> getStagingTasks() {
     return toTaskSet(stagingTasks);
   }
 
-  public void setActiveTasks(Set<Protos.TaskID> tasks) {
+  public void setActiveTasks(Set<MesosV1.TaskID> tasks) {
     if (tasks != null) {
       activeTasks = new ArrayList<ByteBuffer>(tasks.size());
       toTaskBuffer(tasks, activeTasks);
     }
   }
 
-  public Set<Protos.TaskID> getActiveTasks() {
+  public Set<MesosV1.TaskID> getActiveTasks() {
     return toTaskSet(activeTasks);
   }
 
-  public void setLostTasks(Set<Protos.TaskID> tasks) {
+  public void setLostTasks(Set<MesosV1.TaskID> tasks) {
     if (tasks != null) {
       lostTasks = new ArrayList<ByteBuffer>(tasks.size());
       toTaskBuffer(tasks, lostTasks);
     }
   }
 
-  public Set<Protos.TaskID> getLostTasks() {
+  public Set<MesosV1.TaskID> getLostTasks() {
     return toTaskSet(lostTasks);
   }
 
-  public void setKillableTasks(Set<Protos.TaskID> tasks) {
+  public void setKillableTasks(Set<MesosV1.TaskID> tasks) {
     if (tasks != null) {
       killableTasks = new ArrayList<ByteBuffer>(tasks.size());
       toTaskBuffer(tasks, killableTasks);
     }
   }
 
-  public Set<Protos.TaskID> getKillableTasks() {
+  public Set<MesosV1.TaskID> getKillableTasks() {
     return toTaskSet(killableTasks);
   }
 
-  private void toTaskBuffer(Set<Protos.TaskID> src, List<ByteBuffer> tgt) {
-    for (Protos.TaskID id : src) {
-      tgt.add(ByteBufferSupport.toByteBuffer(id));
+  private void toTaskBuffer(Set<MesosV1.TaskID> src, List<ByteBuffer> tgt) {
+    for (MesosV1.TaskID id : src) {
+      //TODO:here
+      //tgt.add(ByteBufferSupport.toByteBuffer(id));
     }
   }
 
-  private Set<Protos.TaskID> toTaskSet(List<ByteBuffer> src) {
-    Set<Protos.TaskID> tasks;
+  private Set<MesosV1.TaskID> toTaskSet(List<ByteBuffer> src) {
+    Set<MesosV1.TaskID> tasks;
     if (src != null) {
-      tasks = new HashSet<Protos.TaskID>(src.size());
+      tasks = new HashSet<MesosV1.TaskID>(src.size());
       for (int i = 0; i < src.size(); i++) {
-        tasks.add(ByteBufferSupport.toTaskId(src.get(i)));
+        //TODO:here
+        //tasks.add(ByteBufferSupport.toTaskId(src.get(i)));
       }
     } else {
-      tasks = new HashSet<Protos.TaskID>(0);
+      tasks = new HashSet<MesosV1.TaskID>(0);
     }
     return tasks;
   }

@@ -19,9 +19,9 @@
 package org.apache.myriad.scheduler;
 
 import com.google.inject.Inject;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.ServiceConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.resource.ResourceOfferContainer;
 import org.apache.myriad.state.NodeTask;
 
@@ -45,32 +45,37 @@ public class ServiceTaskFactory extends TaskFactory {
   }
 
   @Override
-  public Protos.TaskInfo createTask(ResourceOfferContainer resourceOfferContainer, Protos.FrameworkID frameworkId, Protos.TaskID taskId, NodeTask nodeTask) {
+  public MesosV1.TaskInfo createTask(ResourceOfferContainer resourceOfferContainer, MesosV1.FrameworkID frameworkId, MesosV1.TaskID taskId, NodeTask nodeTask) {
     ServiceConfiguration serviceConfig = cfg.getServiceConfiguration(nodeTask.getTaskPrefix()).get();
 
     Objects.requireNonNull(serviceConfig, "ServiceConfig should be non-null");
     Objects.requireNonNull(serviceConfig.getCommand().orNull(), "command for ServiceConfig should be non-null");
-    List<Protos.Resource> portResources = resourceOfferContainer.consumePorts(nodeTask.getProfile().getPorts().values());
-    Protos.CommandInfo commandInfo = clGenerator.generateCommandLine(nodeTask.getProfile(), serviceConfig, rangesConverter(portResources));
+    List<MesosV1.Resource> portResources = resourceOfferContainer.consumePorts(nodeTask.getProfile().getPorts().values());
+    MesosV1.CommandInfo commandInfo = clGenerator.generateCommandLine(nodeTask.getProfile(), serviceConfig, rangesConverter(portResources));
 
     LOGGER.info("Command line for service: {} is: {}", commandInfo.getValue());
 
-    Protos.TaskInfo.Builder taskBuilder = Protos.TaskInfo.newBuilder();
+    MesosV1.TaskInfo taskBuilder = new MesosV1.TaskInfo();
 
-    taskBuilder.setName(nodeTask.getTaskPrefix()).setTaskId(taskId).setSlaveId(resourceOfferContainer.getSlaveId())
-        .addAllResources(resourceOfferContainer.consumeCpus(nodeTask.getProfile().getCpus()))
-        .addAllResources(resourceOfferContainer.consumeMem(nodeTask.getProfile().getMemory()))
-        .addAllResources(portResources);
+    taskBuilder.setName(nodeTask.getTaskPrefix());
+    taskBuilder.setTask_id(taskId);
+    taskBuilder.setAgent_id(resourceOfferContainer.getSlaveId());
+
+    List<MesosV1.Resource> resourceList = resourceOfferContainer.consumeCpus(nodeTask.getProfile().getCpus());
+    resourceList.addAll(resourceOfferContainer.consumeMem(nodeTask.getProfile().getMemory()));
+    resourceList.addAll(portResources);
+
+    taskBuilder.setResources(resourceList);
 
     taskBuilder.setCommand(commandInfo);
     if (cfg.getContainerInfo().isPresent()) {
       taskBuilder.setContainer(getContainerInfo());
     }
-    return taskBuilder.build();
+    return taskBuilder;
   }
 
   @Override
-  public Protos.ExecutorInfo getExecutorInfoForSlave(ResourceOfferContainer resourceOfferContainer, Protos.FrameworkID frameworkId, Protos.CommandInfo commandInfo) {
+  public MesosV1.ExecutorInfo getExecutorInfoForSlave(ResourceOfferContainer resourceOfferContainer, MesosV1.FrameworkID frameworkId, MesosV1.CommandInfo commandInfo) {
     return null;
   }
 }

@@ -31,14 +31,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.SlaveID;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.ServiceResourceProfile;
 import org.apache.myriad.state.utils.StoreContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 
 /**
@@ -50,8 +48,8 @@ public class SchedulerState {
 
   private static Pattern taskIdPattern = Pattern.compile("\\.");
 
-  private Map<Protos.TaskID, NodeTask> tasks;
-  private Protos.FrameworkID frameworkId;
+  private Map<MesosV1.TaskID, NodeTask> tasks;
+  private MesosV1.FrameworkID frameworkId;
   private MyriadStateStore stateStore;
   private Map<String, SchedulerStateForType> statesForTaskType;
 
@@ -74,8 +72,9 @@ public class SchedulerState {
       return;
     }
     for (NodeTask node : nodes) {
-      Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(String.format("%s.%s.%s", node.getTaskPrefix(),
-          node.getProfile().getName(), UUID.randomUUID())).build();
+      MesosV1.TaskID taskId = new MesosV1.TaskID();
+      taskId.setValue(String.format("%s.%s.%s", node.getTaskPrefix(),
+          node.getProfile().getName(), UUID.randomUUID()));
       addTask(taskId, node);
       SchedulerStateForType taskState = this.statesForTaskType.get(node.getTaskPrefix());
       LOGGER.info("Marked taskId {} pending, size of pending queue for {} is: {}", taskId.getValue(), node.getTaskPrefix(),
@@ -86,21 +85,21 @@ public class SchedulerState {
   }
 
   // TODO (sdaingade) Clone NodeTask
-  public synchronized void addTask(Protos.TaskID taskId, NodeTask node) {
+  public synchronized void addTask(MesosV1.TaskID taskId, NodeTask node) {
     this.tasks.put(taskId, node);
     updateStateStore();
   }
 
-  public synchronized void updateTask(Protos.TaskStatus taskStatus) {
+  public synchronized void updateTask(MesosV1.TaskStatus taskStatus) {
     Objects.requireNonNull(taskStatus, "TaskStatus object shouldn't be null");
-    Protos.TaskID taskId = taskStatus.getTaskId();
+    MesosV1.TaskID taskId = taskStatus.getTask_id();
     if (this.tasks.containsKey(taskId)) {
       this.tasks.get(taskId).setTaskStatus(taskStatus);
     }
     updateStateStore();
   }
 
-  public synchronized void makeTaskPending(Protos.TaskID taskId) {
+  public synchronized void makeTaskPending(MesosV1.TaskID taskId) {
     Objects.requireNonNull(taskId, "taskId cannot be empty or null");
     String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
     SchedulerStateForType taskTypeState = statesForTaskType.get(taskPrefix);
@@ -112,7 +111,7 @@ public class SchedulerState {
     updateStateStore();
   }
 
-  public synchronized void makeTaskStaging(Protos.TaskID taskId) {
+  public synchronized void makeTaskStaging(MesosV1.TaskID taskId) {
     Objects.requireNonNull(taskId, "taskId cannot be empty or null");
     String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
     SchedulerStateForType taskTypeState = statesForTaskType.get(taskPrefix);
@@ -124,7 +123,7 @@ public class SchedulerState {
     updateStateStore();
   }
 
-  public synchronized void makeTaskActive(Protos.TaskID taskId) {
+  public synchronized void makeTaskActive(MesosV1.TaskID taskId) {
     Objects.requireNonNull(taskId, "taskId cannot be empty or null");
     String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
     SchedulerStateForType taskTypeState = statesForTaskType.get(taskPrefix);
@@ -136,7 +135,7 @@ public class SchedulerState {
     updateStateStore();
   }
 
-  public synchronized void makeTaskLost(Protos.TaskID taskId) {
+  public synchronized void makeTaskLost(MesosV1.TaskID taskId) {
     Objects.requireNonNull(taskId, "taskId cannot be empty or null");
     String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
     SchedulerStateForType taskTypeState = statesForTaskType.get(taskPrefix);
@@ -148,7 +147,7 @@ public class SchedulerState {
     updateStateStore();
   }
 
-  public synchronized void makeTaskKillable(Protos.TaskID taskId) {
+  public synchronized void makeTaskKillable(MesosV1.TaskID taskId) {
     Objects.requireNonNull(taskId, "taskId cannot be empty or null");
     String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
     SchedulerStateForType taskTypeState = statesForTaskType.get(taskPrefix);
@@ -161,7 +160,7 @@ public class SchedulerState {
   }
 
   // TODO (sdaingade) Clone NodeTask
-  public synchronized NodeTask getTask(Protos.TaskID taskId) {
+  public synchronized NodeTask getTask(MesosV1.TaskID taskId) {
     return this.tasks.get(taskId);
   }
 
@@ -169,8 +168,8 @@ public class SchedulerState {
    * Return a list of TaskIDs corresponding to all killable tasks
    * @return
    */
-  public synchronized Set<Protos.TaskID> getKillableTaskIds() {
-    Set<Protos.TaskID> returnSet = new HashSet<>();
+  public synchronized Set<MesosV1.TaskID> getKillableTaskIds() {
+    Set<MesosV1.TaskID> returnSet = new HashSet<>();
     for (Map.Entry<String, SchedulerStateForType> entry : statesForTaskType.entrySet()) {
       returnSet.addAll(entry.getValue().getKillableTaskIds());
     }
@@ -183,12 +182,12 @@ public class SchedulerState {
    * @param taskPrefix
    * @return
    */
-  public synchronized Set<Protos.TaskID> getKillableTaskIds(String taskPrefix) {
+  public synchronized Set<MesosV1.TaskID> getKillableTaskIds(String taskPrefix) {
     SchedulerStateForType stateTask = statesForTaskType.get(taskPrefix);
-    return (stateTask == null ? new HashSet<Protos.TaskID>() : stateTask.getKillableTaskIds());
+    return (stateTask == null ? new HashSet<MesosV1.TaskID>() : stateTask.getKillableTaskIds());
   }
 
-  public synchronized void removeTask(Protos.TaskID taskId) {
+  public synchronized void removeTask(MesosV1.TaskID taskId) {
     String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
     SchedulerStateForType taskTypeState = statesForTaskType.get(taskPrefix);
     if (taskTypeState != null) {
@@ -198,18 +197,18 @@ public class SchedulerState {
     updateStateStore();
   }
 
-  public synchronized Set<Protos.TaskID> getPendingTaskIds() {
-    Set<Protos.TaskID> returnSet = new HashSet<>();
+  public synchronized Set<MesosV1.TaskID> getPendingTaskIds() {
+    Set<MesosV1.TaskID> returnSet = new HashSet<>();
     for (Map.Entry<String, SchedulerStateForType> entry : statesForTaskType.entrySet()) {
       returnSet.addAll(entry.getValue().getPendingTaskIds());
     }
     return returnSet;
   }
 
-  public synchronized Collection<Protos.TaskID> getPendingTaskIDsForProfile(ServiceResourceProfile serviceProfile) {
-    List<Protos.TaskID> pendingTaskIds = new ArrayList<>();
-    Set<Protos.TaskID> pendingTasks = getPendingTaskIds();
-    for (Map.Entry<Protos.TaskID, NodeTask> entry : tasks.entrySet()) {
+  public synchronized Collection<MesosV1.TaskID> getPendingTaskIDsForProfile(ServiceResourceProfile serviceProfile) {
+    List<MesosV1.TaskID> pendingTaskIds = new ArrayList<>();
+    Set<MesosV1.TaskID> pendingTasks = getPendingTaskIds();
+    for (Map.Entry<MesosV1.TaskID, NodeTask> entry : tasks.entrySet()) {
       NodeTask nodeTask = entry.getValue();
       if (pendingTasks.contains(entry.getKey()) && nodeTask.getProfile().getName().equals(serviceProfile.getName())) {
         pendingTaskIds.add(entry.getKey());
@@ -218,22 +217,22 @@ public class SchedulerState {
     return Collections.unmodifiableCollection(pendingTaskIds);
   }
 
-  public synchronized Set<Protos.TaskID> getPendingTaskIds(String taskPrefix) {
+  public synchronized Set<MesosV1.TaskID> getPendingTaskIds(String taskPrefix) {
     SchedulerStateForType stateTask = statesForTaskType.get(taskPrefix);
-    return (stateTask == null ? new HashSet<Protos.TaskID>() : stateTask.getPendingTaskIds());
+    return (stateTask == null ? new HashSet<MesosV1.TaskID>() : stateTask.getPendingTaskIds());
   }
 
-  public synchronized Set<Protos.TaskID> getActiveTaskIds() {
-    Set<Protos.TaskID> returnSet = new HashSet<>();
+  public synchronized Set<MesosV1.TaskID> getActiveTaskIds() {
+    Set<MesosV1.TaskID> returnSet = new HashSet<>();
     for (Map.Entry<String, SchedulerStateForType> entry : statesForTaskType.entrySet()) {
       returnSet.addAll(entry.getValue().getActiveTaskIds());
     }
     return returnSet;
   }
 
-  public synchronized Set<Protos.TaskID> getActiveTaskIds(String taskPrefix) {
+  public synchronized Set<MesosV1.TaskID> getActiveTaskIds(String taskPrefix) {
     SchedulerStateForType stateTask = statesForTaskType.get(taskPrefix);
-    return (stateTask == null ? new HashSet<Protos.TaskID>() : stateTask.getActiveTaskIds());
+    return (stateTask == null ? new HashSet<MesosV1.TaskID>() : stateTask.getActiveTaskIds());
   }
 
   public synchronized Set<NodeTask> getActiveTasks() {
@@ -256,10 +255,10 @@ public class SchedulerState {
     return getTasks(getPendingTaskIds(taskPrefix));
   }
 
-  public synchronized Set<NodeTask> getTasks(Set<Protos.TaskID> taskIds) {
+  public synchronized Set<NodeTask> getTasks(Set<MesosV1.TaskID> taskIds) {
     Set<NodeTask> nodeTasks = new HashSet<>();
     if (CollectionUtils.isNotEmpty(taskIds) && CollectionUtils.isNotEmpty(tasks.values())) {
-      for (Map.Entry<Protos.TaskID, NodeTask> entry : tasks.entrySet()) {
+      for (Map.Entry<MesosV1.TaskID, NodeTask> entry : tasks.entrySet()) {
         if (taskIds.contains(entry.getKey())) {
           nodeTasks.add(entry.getValue());
         }
@@ -268,11 +267,11 @@ public class SchedulerState {
     return Collections.unmodifiableSet(nodeTasks);
   }
 
-  public synchronized Collection<Protos.TaskID> getActiveTaskIDsForProfile(ServiceResourceProfile serviceProfile) {
-    List<Protos.TaskID> activeTaskIDs = new ArrayList<>();
-    Set<Protos.TaskID> activeTaskIds = getActiveTaskIds();
+  public synchronized Collection<MesosV1.TaskID> getActiveTaskIDsForProfile(ServiceResourceProfile serviceProfile) {
+    List<MesosV1.TaskID> activeTaskIDs = new ArrayList<>();
+    Set<MesosV1.TaskID> activeTaskIds = getActiveTaskIds();
     if (CollectionUtils.isNotEmpty(activeTaskIds) && CollectionUtils.isNotEmpty(tasks.values())) {
-      for (Map.Entry<Protos.TaskID, NodeTask> entry : tasks.entrySet()) {
+      for (Map.Entry<MesosV1.TaskID, NodeTask> entry : tasks.entrySet()) {
         NodeTask nodeTask = entry.getValue();
         if (activeTaskIds.contains(entry.getKey()) && nodeTask.getProfile().getName().equals(serviceProfile.getName())) {
           activeTaskIDs.add(entry.getKey());
@@ -283,11 +282,11 @@ public class SchedulerState {
   }
 
   // TODO (sdaingade) Clone NodeTask
-  public synchronized NodeTask getNodeTask(SlaveID slaveId, String taskPrefix) {
+  public synchronized NodeTask getNodeTask(MesosV1.AgentID slaveId, String taskPrefix) {
     if (taskPrefix == null) {
       return null;
     }
-    for (Map.Entry<Protos.TaskID, NodeTask> entry : tasks.entrySet()) {
+    for (Map.Entry<MesosV1.TaskID, NodeTask> entry : tasks.entrySet()) {
       final NodeTask task = entry.getValue();
       if (task.getSlaveId() != null &&
           task.getSlaveId().equals(slaveId) &&
@@ -298,9 +297,9 @@ public class SchedulerState {
     return null;
   }
 
-  public synchronized Set<NodeTask> getNodeTasks(SlaveID slaveId) {
+  public synchronized Set<NodeTask> getNodeTasks(MesosV1.AgentID slaveId) {
     Set<NodeTask> nodeTasks = Sets.newHashSet();
-    for (Map.Entry<Protos.TaskID, NodeTask> entry : tasks.entrySet()) {
+    for (Map.Entry<MesosV1.TaskID, NodeTask> entry : tasks.entrySet()) {
       final NodeTask task = entry.getValue();
       if (task.getSlaveId() != null && task.getSlaveId().equals(slaveId)) {
         nodeTasks.add(entry.getValue());
@@ -309,19 +308,19 @@ public class SchedulerState {
     return nodeTasks;
   }
 
-  public Set<Protos.TaskID> getStagingTaskIds() {
-    Set<Protos.TaskID> returnSet = new HashSet<>();
+  public Set<MesosV1.TaskID> getStagingTaskIds() {
+    Set<MesosV1.TaskID> returnSet = new HashSet<>();
     for (Map.Entry<String, SchedulerStateForType> entry : statesForTaskType.entrySet()) {
       returnSet.addAll(entry.getValue().getStagingTaskIds());
     }
     return returnSet;
   }
 
-  public synchronized Collection<Protos.TaskID> getStagingTaskIDsForProfile(ServiceResourceProfile serviceProfile) {
-    List<Protos.TaskID> stagingTaskIDs = new ArrayList<>();
+  public synchronized Collection<MesosV1.TaskID> getStagingTaskIDsForProfile(ServiceResourceProfile serviceProfile) {
+    List<MesosV1.TaskID> stagingTaskIDs = new ArrayList<>();
 
-    Set<Protos.TaskID> stagingTasks = getStagingTaskIds();
-    for (Map.Entry<Protos.TaskID, NodeTask> entry : tasks.entrySet()) {
+    Set<MesosV1.TaskID> stagingTasks = getStagingTaskIds();
+    for (Map.Entry<MesosV1.TaskID, NodeTask> entry : tasks.entrySet()) {
       NodeTask nodeTask = entry.getValue();
       if (stagingTasks.contains(entry.getKey()) && nodeTask.getProfile().getName().equals(serviceProfile.getName())) {
         stagingTaskIDs.add(entry.getKey());
@@ -330,31 +329,31 @@ public class SchedulerState {
     return Collections.unmodifiableCollection(stagingTaskIDs);
   }
 
-  public Set<Protos.TaskID> getStagingTaskIds(String taskPrefix) {
+  public Set<MesosV1.TaskID> getStagingTaskIds(String taskPrefix) {
     SchedulerStateForType stateTask = statesForTaskType.get(taskPrefix);
-    return (stateTask == null ? new HashSet<Protos.TaskID>() : stateTask.getStagingTaskIds());
+    return (stateTask == null ? new HashSet<MesosV1.TaskID>() : stateTask.getStagingTaskIds());
   }
 
-  public Set<Protos.TaskID> getLostTaskIds() {
-    Set<Protos.TaskID> returnSet = new HashSet<>();
+  public Set<MesosV1.TaskID> getLostTaskIds() {
+    Set<MesosV1.TaskID> returnSet = new HashSet<>();
     for (Map.Entry<String, SchedulerStateForType> entry : statesForTaskType.entrySet()) {
       returnSet.addAll(entry.getValue().getLostTaskIds());
     }
     return returnSet;
   }
 
-  public Set<Protos.TaskID> getLostTaskIds(String taskPrefix) {
+  public Set<MesosV1.TaskID> getLostTaskIds(String taskPrefix) {
     SchedulerStateForType stateTask = statesForTaskType.get(taskPrefix);
-    return (stateTask == null ? new HashSet<Protos.TaskID>() : stateTask.getLostTaskIds());
+    return (stateTask == null ? new HashSet<MesosV1.TaskID>() : stateTask.getLostTaskIds());
   }
 
   // TODO (sdaingade) Currently cannot return unmodifiableCollection
   // as this will break ReconcileService code
-  public synchronized Collection<Protos.TaskStatus> getTaskStatuses() {
-    Collection<Protos.TaskStatus> taskStatuses = new ArrayList<>(this.tasks.size());
+  public synchronized Collection<MesosV1.TaskStatus> getTaskStatuses() {
+    Collection<MesosV1.TaskStatus> taskStatuses = new ArrayList<>(this.tasks.size());
     Collection<NodeTask> tasks = this.tasks.values();
     for (NodeTask task : tasks) {
-      Protos.TaskStatus taskStatus = task.getTaskStatus();
+      MesosV1.TaskStatus taskStatus = task.getTaskStatus();
       if (taskStatus != null) {
         taskStatuses.add(taskStatus);
       }
@@ -363,15 +362,15 @@ public class SchedulerState {
     return taskStatuses;
   }
 
-  public synchronized boolean hasTask(Protos.TaskID taskID) {
+  public synchronized boolean hasTask(MesosV1.TaskID taskID) {
     return this.tasks.containsKey(taskID);
   }
 
-  public synchronized Optional<Protos.FrameworkID> getFrameworkID() {
-    return Optional.fromNullable(frameworkId);
+  public synchronized MesosV1.FrameworkID getFrameworkID() {
+    return frameworkId;
   }
 
-  public synchronized void setFrameworkId(Protos.FrameworkID newFrameworkId) {
+  public synchronized void setFrameworkId(MesosV1.FrameworkID newFrameworkId) {
     this.frameworkId = newFrameworkId;
     updateStateStore();
   }
@@ -418,8 +417,8 @@ public class SchedulerState {
     }
   }
 
-  private void convertToThis(TaskState taskType, Set<Protos.TaskID> taskIds) {
-    for (Protos.TaskID taskId : taskIds) {
+  private void convertToThis(TaskState taskType, Set<MesosV1.TaskID> taskIds) {
+    for (MesosV1.TaskID taskId : taskIds) {
       String taskPrefix = taskIdPattern.split(taskId.getValue())[0];
       SchedulerStateForType taskTypeState = statesForTaskType.get(taskPrefix);
       if (taskTypeState == null) {
@@ -452,21 +451,21 @@ public class SchedulerState {
   private static class SchedulerStateForType {
 
     private final String taskPrefix;
-    private Set<Protos.TaskID> pendingTasks;
-    private Set<Protos.TaskID> stagingTasks;
-    private Set<Protos.TaskID> activeTasks;
-    private Set<Protos.TaskID> lostTasks;
-    private Set<Protos.TaskID> killableTasks;
+    private Set<MesosV1.TaskID> pendingTasks;
+    private Set<MesosV1.TaskID> stagingTasks;
+    private Set<MesosV1.TaskID> activeTasks;
+    private Set<MesosV1.TaskID> lostTasks;
+    private Set<MesosV1.TaskID> killableTasks;
 
     public SchedulerStateForType(String taskPrefix) {
       this.taskPrefix = taskPrefix;
       // Since Sets.newConcurrentHashSet is available only starting form Guava version 15
       // and so far (Hadoop 2.7) uses guava 13 we can not easily use it
-      this.pendingTasks = Collections.newSetFromMap(new ConcurrentHashMap<Protos.TaskID, Boolean>());
-      this.stagingTasks = Collections.newSetFromMap(new ConcurrentHashMap<Protos.TaskID, Boolean>());
-      this.activeTasks = Collections.newSetFromMap(new ConcurrentHashMap<Protos.TaskID, Boolean>());
-      this.lostTasks = Collections.newSetFromMap(new ConcurrentHashMap<Protos.TaskID, Boolean>());
-      this.killableTasks = Collections.newSetFromMap(new ConcurrentHashMap<Protos.TaskID, Boolean>());
+      this.pendingTasks = Collections.newSetFromMap(new ConcurrentHashMap<MesosV1.TaskID, Boolean>());
+      this.stagingTasks = Collections.newSetFromMap(new ConcurrentHashMap<MesosV1.TaskID, Boolean>());
+      this.activeTasks = Collections.newSetFromMap(new ConcurrentHashMap<MesosV1.TaskID, Boolean>());
+      this.lostTasks = Collections.newSetFromMap(new ConcurrentHashMap<MesosV1.TaskID, Boolean>());
+      this.killableTasks = Collections.newSetFromMap(new ConcurrentHashMap<MesosV1.TaskID, Boolean>());
 
     }
 
@@ -475,7 +474,7 @@ public class SchedulerState {
       return taskPrefix;
     }
 
-    public synchronized void makeTaskPending(Protos.TaskID taskId) {
+    public synchronized void makeTaskPending(MesosV1.TaskID taskId) {
       Objects.requireNonNull(taskId, "taskId cannot be empty or null");
 
       pendingTasks.add(taskId);
@@ -485,7 +484,7 @@ public class SchedulerState {
       killableTasks.remove(taskId);
     }
 
-    public synchronized void makeTaskStaging(Protos.TaskID taskId) {
+    public synchronized void makeTaskStaging(MesosV1.TaskID taskId) {
       Objects.requireNonNull(taskId, "taskId cannot be empty or null");
       pendingTasks.remove(taskId);
       stagingTasks.add(taskId);
@@ -494,7 +493,7 @@ public class SchedulerState {
       killableTasks.remove(taskId);
     }
 
-    public synchronized void makeTaskActive(Protos.TaskID taskId) {
+    public synchronized void makeTaskActive(MesosV1.TaskID taskId) {
       Objects.requireNonNull(taskId, "taskId cannot be empty or null");
       pendingTasks.remove(taskId);
       stagingTasks.remove(taskId);
@@ -503,7 +502,7 @@ public class SchedulerState {
       killableTasks.remove(taskId);
     }
 
-    public synchronized void makeTaskLost(Protos.TaskID taskId) {
+    public synchronized void makeTaskLost(MesosV1.TaskID taskId) {
       Objects.requireNonNull(taskId, "taskId cannot be empty or null");
       pendingTasks.remove(taskId);
       stagingTasks.remove(taskId);
@@ -512,7 +511,7 @@ public class SchedulerState {
       killableTasks.remove(taskId);
     }
 
-    public synchronized void makeTaskKillable(Protos.TaskID taskId) {
+    public synchronized void makeTaskKillable(MesosV1.TaskID taskId) {
       Objects.requireNonNull(taskId, "taskId cannot be empty or null");
       pendingTasks.remove(taskId);
       stagingTasks.remove(taskId);
@@ -521,7 +520,7 @@ public class SchedulerState {
       killableTasks.add(taskId);
     }
 
-    public synchronized void removeTask(Protos.TaskID taskId) {
+    public synchronized void removeTask(MesosV1.TaskID taskId) {
       this.pendingTasks.remove(taskId);
       this.stagingTasks.remove(taskId);
       this.activeTasks.remove(taskId);
@@ -529,23 +528,23 @@ public class SchedulerState {
       this.killableTasks.remove(taskId);
     }
 
-    public synchronized Set<Protos.TaskID> getPendingTaskIds() {
+    public synchronized Set<MesosV1.TaskID> getPendingTaskIds() {
       return Collections.unmodifiableSet(this.pendingTasks);
     }
 
-    public Set<Protos.TaskID> getActiveTaskIds() {
+    public Set<MesosV1.TaskID> getActiveTaskIds() {
       return Collections.unmodifiableSet(this.activeTasks);
     }
 
-    public synchronized Set<Protos.TaskID> getStagingTaskIds() {
+    public synchronized Set<MesosV1.TaskID> getStagingTaskIds() {
       return Collections.unmodifiableSet(this.stagingTasks);
     }
 
-    public synchronized Set<Protos.TaskID> getLostTaskIds() {
+    public synchronized Set<MesosV1.TaskID> getLostTaskIds() {
       return Collections.unmodifiableSet(this.lostTasks);
     }
 
-    public synchronized Set<Protos.TaskID> getKillableTaskIds() {
+    public synchronized Set<MesosV1.TaskID> getKillableTaskIds() {
       return Collections.unmodifiableSet(this.killableTasks);
     }
 

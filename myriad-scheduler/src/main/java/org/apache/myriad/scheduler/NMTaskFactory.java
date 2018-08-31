@@ -19,8 +19,8 @@
 package org.apache.myriad.scheduler;
 
 import com.google.inject.Inject;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.resource.ResourceOfferContainer;
 import org.apache.myriad.state.NodeTask;
 
@@ -38,37 +38,46 @@ public class NMTaskFactory extends TaskFactory {
   }
 
   @Override
-  public Protos.TaskInfo createTask(ResourceOfferContainer resourceOfferContainer, Protos.FrameworkID frameworkId, Protos.TaskID taskId, NodeTask nodeTask) {
+  public MesosV1.TaskInfo createTask(ResourceOfferContainer resourceOfferContainer, MesosV1.FrameworkID frameworkId, MesosV1.TaskID taskId, NodeTask nodeTask) {
     ServiceResourceProfile serviceProfile = nodeTask.getProfile();
     Double taskMemory = serviceProfile.getAggregateMemory();
     Double taskCpus = serviceProfile.getAggregateCpu();
-    List<Protos.Resource> portResources = resourceOfferContainer.consumePorts(serviceProfile.getPorts().values());
-    Protos.CommandInfo commandInfo = clGenerator.generateCommandLine(serviceProfile, null, rangesConverter(portResources));
-    Protos.ExecutorInfo executorInfo = getExecutorInfoForSlave(resourceOfferContainer, frameworkId, commandInfo);
-    Protos.TaskInfo.Builder taskBuilder = Protos.TaskInfo.newBuilder().setName(cfg.getFrameworkName() + "-" + taskId.getValue()).setTaskId(taskId).setSlaveId(
-        resourceOfferContainer.getSlaveId());
+    List<MesosV1.Resource> portResources = resourceOfferContainer.consumePorts(serviceProfile.getPorts().values());
+    MesosV1.CommandInfo commandInfo = clGenerator.generateCommandLine(serviceProfile, null, rangesConverter(portResources));
+    MesosV1.ExecutorInfo executorInfo = getExecutorInfoForSlave(resourceOfferContainer, frameworkId, commandInfo);
 
-    return taskBuilder
-        .addAllResources(resourceOfferContainer.consumeCpus(taskCpus))
-        .addAllResources(resourceOfferContainer.consumeMem(taskMemory))
-        .addAllResources(portResources)
-        .setExecutor(executorInfo)
-        .build();
+    MesosV1.TaskInfo taskInfo = new MesosV1.TaskInfo();
+    taskInfo.setName(cfg.getFrameworkName() + "-" + taskId.getValue());
+    taskInfo.setTask_id(taskId);
+    taskInfo.setAgent_id(resourceOfferContainer.getSlaveId());
+
+    List<MesosV1.Resource> resourceList = resourceOfferContainer.consumeCpus(taskCpus);
+    resourceList.addAll(resourceOfferContainer.consumeMem(taskMemory));
+    resourceList.addAll(portResources);
+    taskInfo.setResources(resourceList);
+    taskInfo.setExecutor(executorInfo);
+    return taskInfo;
   }
 
   @Override
-  public Protos.ExecutorInfo getExecutorInfoForSlave(ResourceOfferContainer resourceOfferContainer, Protos.FrameworkID frameworkId, Protos.CommandInfo commandInfo) {
-    Protos.ExecutorID executorId = Protos.ExecutorID.newBuilder()
-        .setValue(EXECUTOR_PREFIX + frameworkId.getValue() + resourceOfferContainer.getOfferId() +
-            resourceOfferContainer.getSlaveId().getValue())
-        .build();
-    Protos.ExecutorInfo.Builder executorInfo = Protos.ExecutorInfo.newBuilder().setCommand(commandInfo).setName(EXECUTOR_NAME).setExecutorId(executorId)
-        .addAllResources(resourceOfferContainer.consumeCpus(taskUtils.getExecutorCpus()))
-        .addAllResources(resourceOfferContainer.consumeMem(taskUtils.getExecutorMemory()));
+  public MesosV1.ExecutorInfo getExecutorInfoForSlave(ResourceOfferContainer resourceOfferContainer, MesosV1.FrameworkID frameworkId, MesosV1.CommandInfo commandInfo) {
+
+    MesosV1.ExecutorID executorId = new MesosV1.ExecutorID();
+    executorId.setValue(EXECUTOR_PREFIX + frameworkId.getValue() + resourceOfferContainer.getOfferId() + resourceOfferContainer.getSlaveId().getValue());
+
+    MesosV1.ExecutorInfo executorInfo = new MesosV1.ExecutorInfo();
+    executorInfo.setCommand(commandInfo);
+    executorInfo.setName(EXECUTOR_NAME);
+    executorInfo.setExecutor_id(executorId);
+
+    List<MesosV1.Resource> resourceList = resourceOfferContainer.consumeCpus(taskUtils.getExecutorCpus());
+    resourceList.addAll(resourceOfferContainer.consumeMem(taskUtils.getExecutorMemory()));
+
+    executorInfo.setResources(resourceList);
     if (cfg.getContainerInfo().isPresent()) {
       executorInfo.setContainer(getContainerInfo());
     }
-    return executorInfo.build();
+    return executorInfo;
 
   }
 }

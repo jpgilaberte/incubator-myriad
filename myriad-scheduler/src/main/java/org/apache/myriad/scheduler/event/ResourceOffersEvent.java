@@ -19,29 +19,29 @@
 package org.apache.myriad.scheduler.event;
 
 import java.util.List;
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * resource offer event
  */
 public class ResourceOffersEvent {
-  private SchedulerDriver driver;
-  private List<Protos.Offer> offers;
+  private MesosDriver driver;
+  private List<MesosV1.Offer> offers;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 
-  public List<Protos.Offer> getOffers() {
+  public List<MesosV1.Offer> getOffers() {
     return offers;
   }
 
-  public void setOffers(List<Protos.Offer> offers) {
+  public void setOffers(List<MesosV1.Offer> offers) {
     this.offers = offers;
   }
 }

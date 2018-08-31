@@ -21,8 +21,8 @@ package org.apache.myriad.scheduler;
 import com.google.common.base.Preconditions;
 import java.util.Collection;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.NodeManagerConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.state.NodeTask;
 import org.apache.myriad.state.SchedulerState;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public class SchedulerUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(SchedulerUtils.class);
 
-  public static boolean isUniqueHostname(Protos.OfferOrBuilder offer, NodeTask taskToLaunch, Collection<NodeTask> tasks) {
+  public static boolean isUniqueHostname(MesosV1.Offer offer, NodeTask taskToLaunch, Collection<NodeTask> tasks) {
     Preconditions.checkArgument(offer != null);
     String offerHostname = offer.getHostname();
 

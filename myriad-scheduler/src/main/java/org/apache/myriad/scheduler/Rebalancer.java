@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.NodeManagerConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.state.SchedulerState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,8 +47,8 @@ public class Rebalancer implements Runnable {
 
   @Override
   public void run() {
-    final Set<Protos.TaskID> activeIds = schedulerState.getActiveTaskIds(NodeManagerConfiguration.DEFAULT_NM_TASK_PREFIX);
-    final Set<Protos.TaskID> pendingIds = schedulerState.getPendingTaskIds(NodeManagerConfiguration.DEFAULT_NM_TASK_PREFIX);
+    final Set<MesosV1.TaskID> activeIds = schedulerState.getActiveTaskIds(NodeManagerConfiguration.DEFAULT_NM_TASK_PREFIX);
+    final Set<MesosV1.TaskID> pendingIds = schedulerState.getPendingTaskIds(NodeManagerConfiguration.DEFAULT_NM_TASK_PREFIX);
     LOGGER.info("Active {}, Pending {}", activeIds.size(), pendingIds.size());
     if (activeIds.size() < 1 && pendingIds.size() < 1) {
       myriadOperations.flexUpCluster(profileManager.get("small"), 1, null);

@@ -24,8 +24,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.inject.Inject;
 
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.Offer;
+import com.google.common.collect.Lists;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.MyriadDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,34 +79,34 @@ public class OfferLifecycleManager {
     return Optional.fromNullable(nodeStore.getNode(host));
   }
   
-  protected Optional<Offer> getOffer(OfferFeed feed) {
+  protected Optional<MesosV1.Offer> getOffer(OfferFeed feed) {
     return Optional.fromNullable(feed.poll());
   }
   
-  public void declineOffer(Protos.Offer offer) {
-    myriadDriver.getDriver().declineOffer(offer.getId());
+  public void declineOffer(MesosV1.Offer offer) {
+    myriadDriver.getDriver().declineOffer(Lists.newArrayList(offer.getId()), null);
     LOGGER.debug("Declined offer {}", offer.getId());
   }
 
-  public void addOffers(Protos.Offer... offers) {
-    for (Protos.Offer offer : offers) {
+  public void addOffers(MesosV1.Offer... offers) {
+    for (MesosV1.Offer offer : offers) {
       String hostname = offer.getHostname();
    
       Optional<Node> optNode = getOfferNode(hostname);
       if (optNode.isPresent()) {
         OfferFeed feed = getOfferFeed(hostname);
         feed.add(offer);
-        optNode.get().setSlaveId(offer.getSlaveId());
+        optNode.get().setSlaveId(offer.getAgent_id());
 
         LOGGER.debug("addResourceOffers: caching offer for host {}, offer id {}", hostname, offer.getId().getValue());
       } else {
-        myriadDriver.getDriver().declineOffer(offer.getId());
+        myriadDriver.getDriver().declineOffer(Lists.newArrayList(offer.getId()), null);
         LOGGER.debug("Declined offer for unregistered host {}", hostname);
       }
     }
   }
 
-  public void markAsConsumed(Protos.Offer offer) {
+  public void markAsConsumed(MesosV1.Offer offer) {
     ConsumedOffer consumedOffer = consumedOfferMap.get(offer.getHostname());
     if (consumedOffer == null) {
       consumedOffer = new ConsumedOffer();
@@ -134,7 +134,7 @@ public class OfferLifecycleManager {
   public void declineOutstandingOffers(String hostname) {
     int numOutStandingOffers = 0;
     OfferFeed offerFeed = getOfferFeed(hostname);
-    Optional<Offer> optOffer;
+    Optional<MesosV1.Offer> optOffer;
   
     while ((optOffer = getOffer(offerFeed)).isPresent()) {
       declineOffer(optOffer.get());

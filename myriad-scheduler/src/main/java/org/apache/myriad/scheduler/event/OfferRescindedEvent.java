@@ -18,29 +18,29 @@
  */
 package org.apache.myriad.scheduler.event;
 
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * offer rescinded event
  */
 public class OfferRescindedEvent {
-  private SchedulerDriver driver;
-  private Protos.OfferID offerId;
+  private MesosDriver driver;
+  private MesosV1.OfferID offerId;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 
-  public Protos.OfferID getOfferId() {
+  public MesosV1.OfferID getOfferId() {
     return offerId;
   }
 
-  public void setOfferId(Protos.OfferID offerId) {
+  public void setOfferId(MesosV1.OfferID offerId) {
     this.offerId = offerId;
   }
 

@@ -20,6 +20,7 @@ package org.apache.myriad.policy;
 
 import java.util.List;
 import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Policy for scaling down the node managers.
@@ -31,6 +32,6 @@ public interface NodeScaleDownPolicy {
    *
    * @param taskIDs
    */
-  public void apply(List<Protos.TaskID> taskIDs);
+  public void apply(List<MesosV1.TaskID> taskIDs);
 
 }

@@ -18,29 +18,29 @@
  */
 package org.apache.myriad.scheduler.event;
 
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * mesos slave lost event
  */
 public class SlaveLostEvent {
-  private SchedulerDriver driver;
-  private Protos.SlaveID slaveId;
+  private MesosDriver driver;
+  private MesosV1.AgentID slaveId;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 
-  public Protos.SlaveID getSlaveId() {
+  public MesosV1.AgentID getSlaveId() {
     return slaveId;
   }
 
-  public void setSlaveId(Protos.SlaveID slaveId) {
+  public void setSlaveId(MesosV1.AgentID slaveId) {
     this.slaveId = slaveId;
   }
 }

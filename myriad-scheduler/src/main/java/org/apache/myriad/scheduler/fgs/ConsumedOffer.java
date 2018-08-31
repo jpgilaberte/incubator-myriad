@@ -23,29 +23,30 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Represents offers from a slave that have been consumed by Myriad.
  */
 public class ConsumedOffer {
-  private List<Protos.Offer> offers;
+  private List<MesosV1.Offer> offers;
 
   public ConsumedOffer() {
     this.offers = new LinkedList<>();
   }
 
-  public void add(Protos.Offer offer) {
+  public void add(MesosV1.Offer offer) {
     offers.add(offer);
   }
 
-  public List<Protos.Offer> getOffers() {
+  public List<MesosV1.Offer> getOffers() {
     return offers;
   }
 
-  public Collection<Protos.OfferID> getOfferIds() {
-    Collection<Protos.OfferID> ids = new ArrayList<>(offers.size());
+  public Collection<MesosV1.OfferID> getOfferIds() {
+    Collection<MesosV1.OfferID> ids = new ArrayList<>(offers.size());
 
-    for (Protos.Offer offer : offers) {
+    for (MesosV1.Offer offer : offers) {
       ids.add(offer.getId());
     }
 

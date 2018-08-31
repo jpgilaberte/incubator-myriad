@@ -21,6 +21,7 @@ package org.apache.myriad;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
@@ -33,6 +34,9 @@ import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.state.State;
 import org.apache.mesos.state.ZooKeeperState;
 import org.apache.myriad.configuration.MyriadConfiguration;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.MesosDriverHttpApi;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.MyriadDriver;
 import org.apache.myriad.scheduler.MyriadScheduler;
 import org.apache.myriad.state.SchedulerState;
@@ -62,43 +66,53 @@ public class MesosModule extends AbstractModule {
 
   @Provides
   @Singleton
-  SchedulerDriver providesSchedulerDriver(MyriadScheduler scheduler, MyriadConfiguration cfg, SchedulerState schedulerState) {
+  MesosDriver providesSchedulerDriver(MyriadScheduler scheduler, MyriadConfiguration cfg, SchedulerState schedulerState) {
+  //SchedulerDriver providesSchedulerDriver(MyriadScheduler scheduler, MyriadConfiguration cfg, SchedulerState schedulerState) {
 
-    Builder frameworkInfoBuilder = FrameworkInfo.newBuilder().setUser("").setName(cfg.getFrameworkName()).setCheckpoint(
-        cfg.isCheckpoint()).setFailoverTimeout(cfg.getFrameworkFailoverTimeout());
+    MesosV1.FrameworkInfo frameworkInfo = new MesosV1.FrameworkInfo();
+    frameworkInfo.setUser("");
+    frameworkInfo.setName(cfg.getFrameworkName());
+    frameworkInfo.setCheckpoint(cfg.isCheckpoint());
+    frameworkInfo.setFailover_timeout(cfg.getFrameworkFailoverTimeout());
+    frameworkInfo.setRole(cfg.getFrameworkRole());
 
-    frameworkInfoBuilder.setRole(cfg.getFrameworkRole());
+    frameworkInfo.setId(schedulerState.getFrameworkID());
+    //Builder frameworkInfoBuilder = FrameworkInfo.newBuilder().setUser("").setName(cfg.getFrameworkName()).setCheckpoint(
+    //    cfg.isCheckpoint()).setFailoverTimeout(cfg.getFrameworkFailoverTimeout());
 
-    Optional<FrameworkID> optFrameId = schedulerState.getFrameworkID();
+    //frameworkInfoBuilder.setRole(cfg.getFrameworkRole());
+
+    //Optional<FrameworkID> optFrameId = schedulerState.getFrameworkID();
     
-    if (optFrameId.isPresent()) {
-      FrameworkID frameworkId = optFrameId.get();
-      LOGGER.info("Attempting to re-register with frameworkId: {}", frameworkId.getValue());
-      frameworkInfoBuilder.setId(frameworkId);
-    }
+//    if (optFrameId.isPresent()) {
+//      FrameworkID frameworkId = optFrameId.get();
+//      LOGGER.info("Attempting to re-register with frameworkId: {}", frameworkId.getValue());
+//      frameworkInfoBuilder.setId(frameworkId);
+//    }
 
-    String mesosAuthenticationPrincipal = cfg.getMesosAuthenticationPrincipal();
-    String mesosAuthenticationSecretFilename = cfg.getMesosAuthenticationSecretFilename();
-    if (StringUtils.isNotEmpty(mesosAuthenticationPrincipal)) {
-      frameworkInfoBuilder.setPrincipal(mesosAuthenticationPrincipal);
-
-      Credential.Builder credentialBuilder = Credential.newBuilder();
-      credentialBuilder.setPrincipal(mesosAuthenticationPrincipal);
-      if (StringUtils.isNotEmpty(mesosAuthenticationSecretFilename)) {
-        try {
-          credentialBuilder.setSecretBytes(ByteString.readFrom(new FileInputStream(mesosAuthenticationSecretFilename)));
-        } catch (FileNotFoundException ex) {
-          LOGGER.error("Mesos authentication secret file was not found", ex);
-          throw new RuntimeException(ex);
-        } catch (IOException ex) {
-          LOGGER.error("Error reading Mesos authentication secret file", ex);
-          throw new RuntimeException(ex);
-        }
-      }
-      return new MesosSchedulerDriver(scheduler, frameworkInfoBuilder.build(), cfg.getMesosMaster(), credentialBuilder.build());
-    } else {
-      return new MesosSchedulerDriver(scheduler, frameworkInfoBuilder.build(), cfg.getMesosMaster());
-    }
+//    String mesosAuthenticationPrincipal = cfg.getMesosAuthenticationPrincipal();
+//    String mesosAuthenticationSecretFilename = cfg.getMesosAuthenticationSecretFilename();
+//    if (StringUtils.isNotEmpty(mesosAuthenticationPrincipal)) {
+//      //frameworkInfoBuilder.setPrincipal(mesosAuthenticationPrincipal);
+//
+//      Credential.Builder credentialBuilder = Credential.newBuilder();
+//      credentialBuilder.setPrincipal(mesosAuthenticationPrincipal);
+//      if (StringUtils.isNotEmpty(mesosAuthenticationSecretFilename)) {
+//        try {
+//          credentialBuilder.setSecretBytes(ByteString.readFrom(new FileInputStream(mesosAuthenticationSecretFilename)));
+//        } catch (FileNotFoundException ex) {
+//          LOGGER.error("Mesos authentication secret file was not found", ex);
+//          throw new RuntimeException(ex);
+//        } catch (IOException ex) {
+//          LOGGER.error("Error reading Mesos authentication secret file", ex);
+//          throw new RuntimeException(ex);
+//        }
+//      }
+//      //return new MesosDriverHttpApi(scheduler, frameworkInfoBuilder.build(), cfg.getMesosMaster(), credentialBuilder.build());
+//      return new MesosDriverHttpApi(scheduler, frameworkInfo, Arrays.asList(cfg.getMesosMaster()));
+//    } else {
+      return new MesosDriverHttpApi(scheduler, frameworkInfo, Arrays.asList(cfg.getMesosMaster()));
+    //}
   }
 
   @Provides

@@ -22,10 +22,10 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.apache.mesos.Protos;
-import org.apache.mesos.Scheduler;
-import org.apache.mesos.SchedulerDriver;
 import org.apache.myriad.configuration.MyriadConfiguration;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.SchedulerInterfaceV1;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.event.DisconnectedEvent;
 import org.apache.myriad.scheduler.event.ErrorEvent;
 import org.apache.myriad.scheduler.event.ExecutorLostEvent;
@@ -43,7 +43,7 @@ import com.lmax.disruptor.EventTranslator;
  * The Myriad implementation of the Mesos Scheduler callback interface, where the method implementations
  * publish Myriad framework events corresponding to the Mesos callbacks.
  */
-public class MyriadScheduler implements Scheduler {
+public class MyriadScheduler implements SchedulerInterfaceV1 {
   private org.apache.myriad.DisruptorManager disruptorManager;
 
   @Inject
@@ -55,7 +55,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes a RegisteredEvent
    */
   @Override
-  public void registered(final SchedulerDriver driver, final Protos.FrameworkID frameworkId, final Protos.MasterInfo masterInfo) {
+  public void registered(final MesosDriver driver, final MesosV1.FrameworkID frameworkId, final MesosV1.MasterInfo masterInfo) {
     disruptorManager.getRegisteredEventDisruptor().publishEvent(new EventTranslator<RegisteredEvent>() {
       @Override
       public void translateTo(RegisteredEvent event, long sequence) {
@@ -70,7 +70,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes a ReRegisteredEvent
    */
   @Override
-  public void reregistered(final SchedulerDriver driver, final Protos.MasterInfo masterInfo) {
+  public void reregistered(final MesosDriver driver, final MesosV1.MasterInfo masterInfo) {
     disruptorManager.getReRegisteredEventDisruptor().publishEvent(new EventTranslator<ReRegisteredEvent>() {
       @Override
       public void translateTo(ReRegisteredEvent event, long sequence) {
@@ -84,7 +84,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes a ResourceOffersEvent
    */
   @Override
-  public void resourceOffers(final SchedulerDriver driver, final List<Protos.Offer> offers) {
+  public void resourceOffers(final MesosDriver driver, final List<MesosV1.Offer> offers) {
     disruptorManager.getResourceOffersEventDisruptor().publishEvent(new EventTranslator<ResourceOffersEvent>() {
       @Override
       public void translateTo(ResourceOffersEvent event, long sequence) {
@@ -98,7 +98,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes a OfferRescindedEvent
    */
   @Override
-  public void offerRescinded(final SchedulerDriver driver, final Protos.OfferID offerId) {
+  public void offerRescinded(final MesosDriver driver, final MesosV1.OfferID offerId) {
     disruptorManager.getOfferRescindedEventDisruptor().publishEvent(new EventTranslator<OfferRescindedEvent>() {
       @Override
       public void translateTo(OfferRescindedEvent event, long sequence) {
@@ -112,7 +112,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes a StatusUpdateEvent
    */
   @Override
-  public void statusUpdate(final SchedulerDriver driver, final Protos.TaskStatus status) {
+  public void statusUpdate(final MesosDriver driver, final MesosV1.TaskStatus status) {
     disruptorManager.getStatusUpdateEventDisruptor().publishEvent(new EventTranslator<StatusUpdateEvent>() {
       @Override
       public void translateTo(StatusUpdateEvent event, long sequence) {
@@ -126,7 +126,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes FrameworkMessageEvent
    */
   @Override
-  public void frameworkMessage(final SchedulerDriver driver, final Protos.ExecutorID executorId, final Protos.SlaveID slaveId,
+  public void frameworkMessage(final MesosDriver driver, final MesosV1.ExecutorID executorId, final MesosV1.AgentID slaveId,
                                final byte[] bytes) {
     disruptorManager.getFrameworkMessageEventDisruptor().publishEvent(new EventTranslator<FrameworkMessageEvent>() {
       @Override
@@ -143,7 +143,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes DisconnectedEvent
    */
   @Override
-  public void disconnected(final SchedulerDriver driver) {
+  public void disconnected(final MesosDriver driver) {
     disruptorManager.getDisconnectedEventDisruptor().publishEvent(new EventTranslator<DisconnectedEvent>() {
       @Override
       public void translateTo(DisconnectedEvent event, long sequence) {
@@ -156,7 +156,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes SlaveLostEvent
    */
   @Override
-  public void slaveLost(final SchedulerDriver driver, final Protos.SlaveID slaveId) {
+  public void slaveLost(final MesosDriver driver, final MesosV1.AgentID slaveId) {
     disruptorManager.getSlaveLostEventDisruptor().publishEvent(new EventTranslator<SlaveLostEvent>() {
       @Override
       public void translateTo(SlaveLostEvent event, long sequence) {
@@ -170,7 +170,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes ExecutorLostEvent
    */
   @Override
-  public void executorLost(final SchedulerDriver driver, final Protos.ExecutorID executorId, final Protos.SlaveID slaveId,
+  public void executorLost(final MesosDriver driver, final MesosV1.ExecutorID executorId, final MesosV1.AgentID slaveId,
                            final int exitStatus) {
     disruptorManager.getExecutorLostEventDisruptor().publishEvent(new EventTranslator<ExecutorLostEvent>() {
       @Override
@@ -187,7 +187,7 @@ public class MyriadScheduler implements Scheduler {
    * Publishes ErrorEvent
    */
   @Override
-  public void error(final SchedulerDriver driver, final String message) {
+  public void error(final MesosDriver driver, final String message) {
     disruptorManager.getErrorEventDisruptor().publishEvent(new EventTranslator<ErrorEvent>() {
       @Override
       public void translateTo(ErrorEvent event, long sequence) {
@@ -195,5 +195,30 @@ public class MyriadScheduler implements Scheduler {
         event.setMessage(message);
       }
     });
+  }
+
+  @Override
+  public void statusUpdateOperations(MesosDriver driver, MesosV1.OperationStatus status) {
+
+  }
+
+  @Override
+  public void inverseResourceOffers(MesosDriver driver, List<MesosV1.Offer> offers) {
+
+  }
+
+  @Override
+  public void inverseOfferRescinded(MesosDriver driver, MesosV1.OfferID offerId) {
+
+  }
+
+  @Override
+  public void failure(MesosDriver driver, MesosV1.AgentID agentId, MesosV1.ExecutorID executorId, Integer status) {
+
+  }
+
+  @Override
+  public void heartBeat(MesosDriver driver) {
+
   }
 }

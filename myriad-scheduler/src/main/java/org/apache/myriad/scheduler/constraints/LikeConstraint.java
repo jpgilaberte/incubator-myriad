@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import java.util.Collection;
 import java.util.regex.Pattern;
 import org.apache.mesos.Protos.Attribute;
+import org.apache.myriad.driver.model.MesosV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +51,9 @@ public class LikeConstraint implements Constraint {
     return lhs.equalsIgnoreCase(HOSTNAME) && hostname != null && pattern.matcher(hostname).matches();
   }
 
-  public boolean matchesSlaveAttributes(Collection<Attribute> attributes) {
+  public boolean matchesSlaveAttributes(Collection<MesosV1.Attribute> attributes) {
     if (!lhs.equalsIgnoreCase(HOSTNAME) && attributes != null) {
-      for (Attribute attr : attributes) {
+      for (MesosV1.Attribute attr : attributes) {
         if (attr.getName().equalsIgnoreCase(lhs)) {
           switch (attr.getType()) {
             case TEXT:

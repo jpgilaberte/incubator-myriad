@@ -20,6 +20,7 @@ package org.apache.myriad.scheduler.resource;
 
 import com.google.common.base.Preconditions;
 import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.ServiceResourceProfile;
 import org.apache.myriad.scheduler.constraints.Constraint;
 import org.apache.myriad.scheduler.constraints.LikeConstraint;
@@ -40,7 +41,7 @@ public class ResourceOfferContainer {
   private HashMap<String, ScalarResource> scalarValues = new HashMap<>();
   private HashMap<String, RangeResource> rangeValues = new HashMap<>();
 
-  private Protos.Offer offer;
+  private MesosV1.Offer offer;
   private String role;
 
   /**
@@ -49,7 +50,7 @@ public class ResourceOfferContainer {
    * @param offer   Mesos.Protos.Offer
    * @param profile ServiceResourceProfile
    */
-  public ResourceOfferContainer(Protos.Offer offer, ServiceResourceProfile profile, String role) {
+  public ResourceOfferContainer(MesosV1.Offer offer, ServiceResourceProfile profile, String role) {
     this.offer = offer;
     this.role = role;
     setScalarValues();
@@ -69,8 +70,8 @@ public class ResourceOfferContainer {
     return offer.getId().getValue();
   }
 
-  public Protos.SlaveID getSlaveId() {
-    return offer.getSlaveId();
+  public MesosV1.AgentID getSlaveId() {
+    return offer.getAgent_id();
   }
 
   public double getScalarValue(String name) {
@@ -120,7 +121,7 @@ public class ResourceOfferContainer {
           if (likeConstraint.isConstraintOnHostName()) {
             return likeConstraint.matchesHostName(offer.getHostname());
           } else {
-            return likeConstraint.matchesSlaveAttributes(offer.getAttributesList());
+            return likeConstraint.matchesSlaveAttributes(offer.getAttributes());
           }
         }
         default:
@@ -130,7 +131,7 @@ public class ResourceOfferContainer {
     return true;
   }
 
-  private List<Protos.Resource> consumeScalarResource(String name, Double value) {
+  private List<MesosV1.Resource> consumeScalarResource(String name, Double value) {
     Preconditions.checkState(scalarValues.containsKey(name));
     return scalarValues.get(name).consumeResource(value);
   }
@@ -141,9 +142,9 @@ public class ResourceOfferContainer {
    * Uses Preconditions the ensure value is not more that the amount the offer has.
    *
    * @param value
-   * @return List<Protos.Resource>
+   * @return List<MesosV1.Resource>
    */
-  public List<Protos.Resource> consumeCpus(Double value) {
+  public List<MesosV1.Resource> consumeCpus(Double value) {
     return consumeScalarResource(RESOURCE_CPUS, value);
   }
 
@@ -153,9 +154,9 @@ public class ResourceOfferContainer {
    * Uses Preconditions the ensure value is not more that the amount the offer has.
    *
    * @param value
-   * @return List<Protos.Resource>
+   * @return List<MesosV1.Resource>
    */
-  public List<Protos.Resource> consumeMem(Double value) {
+  public List<MesosV1.Resource> consumeMem(Double value) {
     return consumeScalarResource(RESOURCE_MEM, value);
   }
 
@@ -165,22 +166,22 @@ public class ResourceOfferContainer {
    * Uses Preconditions the ensure values are contained in the offer.
    *
    * @param requestedValues
-   * @return List<Protos.Resource>
+   * @return List<MesosV1.Resource>
    */
-  public List<Protos.Resource> consumePorts(Collection<Long> requestedValues) {
+  public List<MesosV1.Resource> consumePorts(Collection<Long> requestedValues) {
     return rangeValues.get(RESOURCE_PORTS).consumeResource(requestedValues);
   }
 
   private void setScalarValues() {
-    for (Protos.Resource r : offer.getResourcesList()) {
-      if (r.hasScalar() && r.hasName() && r.hasRole() && r.getRole().equals(role)) {
+    for (MesosV1.Resource r : offer.getResources()) {
+      if (r.getScalar() != null && r.getName() != null && r.getRole() != null && r.getRole().equals(role)) {
         addToScalarResource(r.getName(), r.getScalar().getValue(), true);
-      } else if (r.hasName() && r.hasScalar()) {
+      } else if (r.getScalar() != null && r.getName() != null) {
         addToScalarResource(r.getName(), r.getScalar().getValue(), false);
-      } else if (r.hasRanges() && r.hasName() && r.hasRole() && r.getRole().equals(role)) {
-        addToRangeResource(r.getName(), r.getRanges().getRangeList(), true);
-      } else if (r.hasRanges() && r.hasName()) {
-        addToRangeResource(r.getName(), r.getRanges().getRangeList(), false);
+      } else if (r.getRanges() != null && r.getName() != null && r.getRole() != null && r.getRole().equals(role)) {
+        addToRangeResource(r.getName(), r.getRanges().getRange(), true);
+      } else if (r.getRanges() != null && r.getName() != null) {
+        addToRangeResource(r.getName(), r.getRanges().getRange(), false);
       }
     }
   }
@@ -194,7 +195,7 @@ public class ResourceOfferContainer {
     }
   }
 
-  private void addToRangeResource(String name, List<Protos.Value.Range> values , Boolean hasRole) {
+  private void addToRangeResource(String name, List<MesosV1.Value.Range> values , Boolean hasRole) {
     if (rangeValues.containsKey(name)) {
       rangeValues.get(name).addRanges(values, hasRole);
     } else {

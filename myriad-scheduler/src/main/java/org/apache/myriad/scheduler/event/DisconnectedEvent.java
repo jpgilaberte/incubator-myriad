@@ -18,19 +18,20 @@
  */
 package org.apache.myriad.scheduler.event;
 
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.SchedulerInterfaceV1;
 
 /**
  * Event to disconnect from mesos
  */
 public class DisconnectedEvent {
-  private SchedulerDriver driver;
+  private MesosDriver driver;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 

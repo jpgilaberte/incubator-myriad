@@ -20,14 +20,14 @@ package org.apache.myriad.state;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
-import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.Attribute;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.ServiceResourceProfile;
 import org.apache.myriad.scheduler.TaskUtils;
 import org.apache.myriad.scheduler.constraints.Constraint;
+
+import java.util.List;
 
 /**
  * Represents a Mesos task to be launched by the Mesos executor
@@ -36,9 +36,9 @@ public class NodeTask {
   @JsonProperty
   private String hostname = StringUtils.EMPTY;
   @JsonProperty
-  private Protos.SlaveID slaveId;
+  private MesosV1.AgentID slaveId;
   @JsonProperty
-  private Protos.TaskStatus taskStatus;
+  private MesosV1.TaskStatus taskStatus;
   @JsonProperty
   private String taskPrefix;
   @JsonProperty
@@ -50,22 +50,22 @@ public class NodeTask {
   /**
    * Mesos executor for this node.
    */
-  private Protos.ExecutorInfo executorInfo;
+  private MesosV1.ExecutorInfo executorInfo;
 
   private Constraint constraint;
   
-  private List<Attribute> slaveAttributes;
+  private List<MesosV1.Attribute> slaveAttributes;
 
   public NodeTask(ServiceResourceProfile profile, Constraint constraint) {
     this.profile    = profile;
     this.constraint = constraint;
   }
 
-  public Protos.SlaveID getSlaveId() {
+  public MesosV1.AgentID getSlaveId() {
     return slaveId;
   }
 
-  public void setSlaveId(Protos.SlaveID slaveId) {
+  public void setSlaveId(MesosV1.AgentID slaveId) {
     this.slaveId = slaveId;
   }
 
@@ -81,27 +81,27 @@ public class NodeTask {
     this.hostname = hostname;
   }
 
-  public Protos.TaskStatus getTaskStatus() {
+  public MesosV1.TaskStatus getTaskStatus() {
     return taskStatus;
   }
 
-  public void setTaskStatus(Protos.TaskStatus taskStatus) {
+  public void setTaskStatus(MesosV1.TaskStatus taskStatus) {
     this.taskStatus = taskStatus;
   }
 
-  public Protos.ExecutorInfo getExecutorInfo() {
+  public MesosV1.ExecutorInfo getExecutorInfo() {
     return executorInfo;
   }
 
-  public void setExecutorInfo(Protos.ExecutorInfo executorInfo) {
+  public void setExecutorInfo(MesosV1.ExecutorInfo executorInfo) {
     this.executorInfo = executorInfo;
   }
 
-  public void setSlaveAttributes(List<Attribute> slaveAttributes) {
+  public void setSlaveAttributes(List<MesosV1.Attribute> slaveAttributes) {
     this.slaveAttributes = slaveAttributes;
   }
 
-  public List<Attribute> getSlaveAttributes() {
+  public List<MesosV1.Attribute> getSlaveAttributes() {
     return slaveAttributes;
   }
 

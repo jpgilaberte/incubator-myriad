@@ -18,39 +18,39 @@
  */
 package org.apache.myriad.scheduler.event;
 
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * executor lost event
  */
 public class ExecutorLostEvent {
-  private SchedulerDriver driver;
-  private Protos.ExecutorID executorId;
-  private Protos.SlaveID slaveId;
+  private MesosDriver driver;
+  private MesosV1.ExecutorID executorId;
+  private MesosV1.AgentID slaveId;
   private int exitStatus;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 
-  public Protos.ExecutorID getExecutorId() {
+  public MesosV1.ExecutorID getExecutorId() {
     return executorId;
   }
 
-  public void setExecutorId(Protos.ExecutorID executorId) {
+  public void setExecutorId(MesosV1.ExecutorID executorId) {
     this.executorId = executorId;
   }
 
-  public Protos.SlaveID getSlaveId() {
+  public MesosV1.AgentID getSlaveId() {
     return slaveId;
   }
 
-  public void setSlaveId(Protos.SlaveID slaveId) {
+  public void setSlaveId(MesosV1.AgentID slaveId) {
     this.slaveId = slaveId;
   }
 

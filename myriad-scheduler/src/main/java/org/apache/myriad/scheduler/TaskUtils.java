@@ -18,8 +18,8 @@
  */
 package org.apache.myriad.scheduler;
 
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.executor.MyriadExecutorDefaults;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,32 +82,46 @@ public class TaskUtils {
    * @param used  - The amount of SCALAR resources already removed from this offer.
    * @return An Iterable containing one or two scalar resources of a given name in an offer up to a given value.
    */
-  public Iterable<Protos.Resource> getScalarResource(Protos.Offer offer, String name, Double value, Double used) {
+  public List<MesosV1.Resource> getScalarResource(MesosV1.Offer offer, String name, Double value, Double used) {
     String role = cfg.getFrameworkRole();
-    List<Protos.Resource> resources = new ArrayList<Protos.Resource>();
+    List<MesosV1.Resource> resources = new ArrayList<MesosV1.Resource>();
 
     double resourceDifference = 0; //used to determine the resource difference of value and the resources requested from role *
     //Find role by name, must loop through resources
-    for (Protos.Resource r : offer.getResourcesList()) {
-      if (r.getName().equals(name) && r.hasRole() && r.getRole().equals(role) && r.hasScalar()) {
+    for (MesosV1.Resource r : offer.getResources()) {
+      if (r.getName().equals(name) && r.getRole() != null && r.getRole().equals(role) && r.getScalar() != null) {
         //Use Math.max in case used>resourceValue
         resourceDifference = Math.max(r.getScalar().getValue() - used, 0.0);
         if (resourceDifference > 0) {
-          resources.add(Protos.Resource.newBuilder().setName(name).setType(Protos.Value.Type.SCALAR)
-              .setScalar(Protos.Value.Scalar.newBuilder().setValue(Math.min(value, resourceDifference)).build())
-              .setRole(role).build());
+          MesosV1.Resource resource = new MesosV1.Resource();
+          resource.setName(name);
+          resource.setType(MesosV1.Value.Type.SCALAR);
+
+          MesosV1.Value.Scalar scalar = new MesosV1.Value.Scalar();
+          scalar.setValue(Math.min(value, resourceDifference));
+          resource.setScalar(scalar);
+          resource.setRole(role);
+
+          resources.add(resource);
         }
         break;
-      } else if (r.getName().equals(name) && r.hasRole() && r.getRole().equals(role)) {
+      } else if (r.getName().equals(name) && r.getRole() != null && r.getRole().equals(role)) {
         //Should never get here, there must be a miss configured slave
         LOGGER.warn("Resource with name: " + name + "expected type to be SCALAR check configuration on: " + offer.getHostname());
       }
     }
     //Assume enough resources are present in default value, if not we shouldn't have gotten to this function.
     if (value - resourceDifference > 0) {
-      resources.add(Protos.Resource.newBuilder().setName(name).setType(Protos.Value.Type.SCALAR)
-          .setScalar(Protos.Value.Scalar.newBuilder().setValue(value - resourceDifference).build())
-          .build()); //no role assumes default
+      MesosV1.Resource resource = new MesosV1.Resource();
+      resource.setName(name);
+      resource.setType(MesosV1.Value.Type.SCALAR);
+
+      MesosV1.Value.Scalar scalar = new MesosV1.Value.Scalar();
+      scalar.setValue(value - resourceDifference);
+      resource.setScalar(scalar);
+
+      resources.add(resource);
+
     }
     return resources;
   }

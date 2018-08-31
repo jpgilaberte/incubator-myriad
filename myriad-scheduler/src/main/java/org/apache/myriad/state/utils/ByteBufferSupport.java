@@ -21,9 +21,8 @@ package org.apache.myriad.state.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.protobuf.GeneratedMessage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -32,7 +31,7 @@ import java.util.List;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.ServiceResourceProfile;
 import org.apache.myriad.scheduler.constraints.Constraint;
 import org.apache.myriad.scheduler.constraints.Constraint.Type;
@@ -70,23 +69,23 @@ public class ByteBufferSupport {
     }
   }
 
-  public static ByteBuffer toByteBuffer(Protos.TaskID taskId) {
+  public static ByteBuffer toByteBuffer(MesosV1.TaskID taskId) {
     return toBuffer(taskId);
   }
 
-  public static ByteBuffer toByteBuffer(Protos.FrameworkID frameworkId) {
+  public static ByteBuffer toByteBuffer(MesosV1.FrameworkID frameworkId) {
     return toBuffer(frameworkId);
   }
 
   /*
    * Common method to convert Protobuf object to ByteBuffer 
    */
-  public static ByteBuffer toBuffer(GeneratedMessage message) {
+  public static ByteBuffer toBuffer(Object message) {
     byte dst[];
     int size;
     if (message != null) {
-      size = message.getSerializedSize() + INT_SIZE;
-      dst = message.toByteArray();
+      size = objetcToByteArray(message).length + INT_SIZE;
+      dst = objetcToByteArray(message);
     } else {
       size = INT_SIZE;
       dst = ZERO_BYTES;
@@ -127,19 +126,19 @@ public class ByteBufferSupport {
     size += hostname.length + INT_SIZE;
 
     if (nt.getSlaveId() != null) {
-      size += nt.getSlaveId().getSerializedSize() + INT_SIZE;
+      size += objetcToByteArray(nt.getSlaveId()).length + INT_SIZE;
     } else {
       size += INT_SIZE;
     }
 
     if (nt.getTaskStatus() != null) {
-      size += nt.getTaskStatus().getSerializedSize() + INT_SIZE;
+      size += objetcToByteArray(nt.getTaskStatus()).length + INT_SIZE;
     } else {
       size += INT_SIZE;
     }
 
     if (nt.getExecutorInfo() != null) {
-      size += nt.getExecutorInfo().getSerializedSize() + INT_SIZE;
+      size += objetcToByteArray(nt.getExecutorInfo()).length + INT_SIZE;
     } else {
       size += INT_SIZE;
     }
@@ -169,11 +168,11 @@ public class ByteBufferSupport {
    * Assumes the entire ByteBuffer is a TaskID.
    *
    * @param bb
-   * @return Protos.TaskID
+   * @return MesosV1.TaskID
    */
-  public static Protos.TaskID toTaskId(ByteBuffer bb) {
+  public static MesosV1.TaskID toTaskId(ByteBuffer bb) {
     try {
-      return Protos.TaskID.parseFrom(getBytes(bb, bb.getInt()));
+      return MesosV1.TaskID.parseFrom(getBytes(bb, bb.getInt()));
     } catch (Exception e) {
       throw new RuntimeException("Failed to parse Task ID", e);
     }
@@ -183,11 +182,11 @@ public class ByteBufferSupport {
    * Assumes the entire ByteBuffer is a FrameworkID.
    *
    * @param bb
-   * @return Protos.FrameworkID
+   * @return MesosV1.FrameworkID
    */
-  public static Protos.FrameworkID toFrameworkID(ByteBuffer bb) {
+  public static MesosV1.FrameworkID toFrameworkID(ByteBuffer bb) {
     try {
-      return Protos.FrameworkID.parseFrom(getBytes(bb, bb.getInt()));
+      return MesosV1.FrameworkID.parseFrom(getBytes(bb, bb.getInt()));
     } catch (Exception e) {
       throw new RuntimeException("Failed to parse Framework ID", e);
     }
@@ -219,7 +218,7 @@ public class ByteBufferSupport {
   
   public static byte[] getTaskBytes(NodeTask nt) {
     if (nt.getTaskStatus() != null) {
-      return nt.getTaskStatus().toByteArray();
+      return objetcToByteArray(nt);
     } else {
       return ZERO_BYTES;
     }
@@ -227,7 +226,7 @@ public class ByteBufferSupport {
 
   public static byte[] getExecutorInfoBytes(NodeTask nt) {
     if (nt.getExecutorInfo() != null) {
-      return nt.getExecutorInfo().toByteArray();
+      return objetcToByteArray(nt.getExecutorInfo());
     } else {
       return ZERO_BYTES;
     }
@@ -235,7 +234,7 @@ public class ByteBufferSupport {
 
   public static byte[] getSlaveBytes(NodeTask nt) {
     if (nt.getSlaveId() != null) {
-      return nt.getSlaveId().toByteArray();
+      return objetcToByteArray(nt.getSlaveId());
     } else {
       return ZERO_BYTES;
     }
@@ -310,11 +309,11 @@ public class ByteBufferSupport {
     return null;
   }
 
-  public static Protos.SlaveID toSlaveId(ByteBuffer bb) {
+  public static MesosV1.AgentID toSlaveId(ByteBuffer bb) {
     int size = bb.getInt();
     if (size > 0) {
       try {
-        return Protos.SlaveID.parseFrom(getBytes(bb, size));
+        return MesosV1.AgentID.parseFrom(getBytes(bb, size));
       } catch (Exception e) {
         throw new RuntimeException("ByteBuffer not in expected format," + " failed to parse SlaveId bytes", e);
       }
@@ -323,11 +322,11 @@ public class ByteBufferSupport {
     }
   }
 
-  public static Protos.TaskStatus toTaskStatus(ByteBuffer bb) {
+  public static MesosV1.TaskStatus toTaskStatus(ByteBuffer bb) {
     int size = bb.getInt();
     if (size > 0) {
       try {
-        return Protos.TaskStatus.parseFrom(getBytes(bb, size));
+        return MesosV1.TaskStatus.parseFrom(getBytes(bb, size));
       } catch (Exception e) {
         throw new RuntimeException("ByteBuffer not in expected format," + " failed to parse TaskStatus bytes", e);
       }
@@ -336,11 +335,11 @@ public class ByteBufferSupport {
     }
   }
 
-  public static Protos.ExecutorInfo toExecutorInfo(ByteBuffer bb) {
+  public static MesosV1.ExecutorInfo toExecutorInfo(ByteBuffer bb) {
     int size = bb.getInt();
     if (size > 0) {
       try {
-        return Protos.ExecutorInfo.parseFrom(getBytes(bb, size));
+        return MesosV1.ExecutorInfo.parseFrom(getBytes(bb, size));
       } catch (Exception e) {
         throw new RuntimeException("ByteBuffer not in expected format," + " failed to parse ExecutorInfo bytes", e);
       }
@@ -370,5 +369,54 @@ public class ByteBufferSupport {
 
   public static ByteBuffer createBuffer(ByteBuffer bb) {
     return fillBuffer(getBytes(bb, bb.getInt()));
+  }
+
+  private static byte[] objetcToByteArray(Object obj){
+    /****/
+    ObjectOutputStream out = null;
+    ByteArrayOutputStream bos = null;
+    try {
+      bos = new ByteArrayOutputStream();
+      out = new ObjectOutputStream(bos);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    try {
+      out.writeObject(obj);
+      out.flush();
+      out.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return bos.toByteArray();
+    /****/
+  }
+
+  private static Object byteArrayToObject(byte[] obj) {
+    /****/
+    Object res=null;
+    ByteArrayInputStream bis = new ByteArrayInputStream(obj);
+    ObjectInput in = null;
+    try {
+      try {
+        in = new ObjectInputStream(bis);
+        res = in.readObject();
+      } catch (IOException e) {
+        e.printStackTrace();
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      }
+    } finally {
+      try {
+        if (in != null) {
+          in.close();
+        }
+      } catch (IOException ex) {
+        // ignore close exception
+      }
+      /****/
+    }
+    return res;
   }
 }

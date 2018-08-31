@@ -23,6 +23,7 @@ import java.util.Set;
 import org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainer;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.SchedulerNode;
 import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Abstraction that encapsulates the combined YARN and Mesos views of a node.
@@ -31,12 +32,12 @@ public class Node {
   /**
    * Mesos slave id associated with this node.
    */
-  private Protos.SlaveID slaveId;
+  private MesosV1.AgentID slaveId;
 
   /**
    * Mesos executor on this node.
    */
-  private Protos.ExecutorInfo execInfo;
+  private MesosV1.ExecutorInfo execInfo;
 
   /**
    * YARN scheduler's representation of this node.
@@ -58,19 +59,19 @@ public class Node {
     return node;
   }
 
-  public Protos.SlaveID getSlaveId() {
+  public MesosV1.AgentID getSlaveId() {
     return slaveId;
   }
 
-  public void setSlaveId(Protos.SlaveID slaveId) {
+  public void setSlaveId(MesosV1.AgentID slaveId) {
     this.slaveId = slaveId;
   }
 
-  public Protos.ExecutorInfo getExecInfo() {
+  public MesosV1.ExecutorInfo getExecInfo() {
     return execInfo;
   }
 
-  public void setExecInfo(Protos.ExecutorInfo execInfo) {
+  public void setExecInfo(MesosV1.ExecutorInfo execInfo) {
     this.execInfo = execInfo;
   }
 

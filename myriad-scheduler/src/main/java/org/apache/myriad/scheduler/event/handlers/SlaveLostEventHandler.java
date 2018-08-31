@@ -19,7 +19,7 @@
 package org.apache.myriad.scheduler.event.handlers;
 
 import com.lmax.disruptor.EventHandler;
-import org.apache.mesos.Protos.SlaveID;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.event.SlaveLostEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class SlaveLostEventHandler implements EventHandler<SlaveLostEvent> {
   //TODO (hokiegeek2) Research how else Myriad should respond to this event
   @Override
   public void onEvent(SlaveLostEvent event, long sequence, boolean endOfBatch) throws Exception {
-    SlaveID slaveId = event.getSlaveId();
+    MesosV1.AgentID slaveId = event.getSlaveId();
     LOGGER.info("Slave {} lost!", slaveId);
   }
 

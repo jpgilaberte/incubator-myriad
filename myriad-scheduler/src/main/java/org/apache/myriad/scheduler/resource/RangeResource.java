@@ -20,7 +20,7 @@ package org.apache.myriad.scheduler.resource;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 
 import java.util.*;
 
@@ -75,8 +75,8 @@ public class RangeResource {
     return ret;
   }
 
-  public void addRanges(List <Protos.Value.Range> ranges, Boolean withRole) {
-    for (Protos.Value.Range range : ranges) {
+  public void addRanges(List <MesosV1.Value.Range> ranges, Boolean withRole) {
+    for (MesosV1.Value.Range range : ranges) {
       long tb = range.getBegin();
       long te = range.getEnd();
       this.ranges.add(new Range(tb, te, withRole));
@@ -87,9 +87,9 @@ public class RangeResource {
     }
   }
 
-  public List<Protos.Resource> consumeResource(Collection<Long> requestedValues) {
+  public List<MesosV1.Resource> consumeResource(Collection<Long> requestedValues) {
     Preconditions.checkState(satisfies(requestedValues));
-    List<Protos.Resource> resources = new ArrayList<>();
+    List<MesosV1.Resource> resources = new ArrayList<>();
     List<Long> nonZeros = new ArrayList<>();
     nonZeros.addAll(requestedValues);
     nonZeros.removeAll(Collections.singleton(0L));
@@ -103,22 +103,21 @@ public class RangeResource {
     return resources;
   }
 
-  private Protos.Resource createResource(Long value, Boolean withRole) {
+  private MesosV1.Resource createResource(Long value, Boolean withRole) {
     Preconditions.checkState(removeValue(value), "Value " + value + " doesn't exist");
-    Protos.Resource.Builder builder = Protos.Resource.newBuilder()
-        .setName(name)
-        .setType(Protos.Value.Type.RANGES)
-        .setRanges(Protos.Value.Ranges.newBuilder()
-            .addRange(Protos.Value.Range.newBuilder()
-                .setBegin(value)
-                .setEnd(value)
-                .build()
-            )
-        );
+    MesosV1.Resource resource = new MesosV1.Resource();
+    MesosV1.Value.Ranges ranges = new MesosV1.Value.Ranges();
+    MesosV1.Value.Range range = new MesosV1.Value.Range();
+    range.setBegin(value.intValue());
+    range.setEnd(value.intValue());
+    ranges.setRange(Arrays.asList(range));
+    resource.setRanges(ranges);
+    resource.setName(name);
+    resource.setType(MesosV1.Value.Type.RANGES);
     if (withRole) {
-      builder.setRole(role);
+      resource.setRole(role);
     }
-    return builder.build();
+    return resource;
   }
 
   private List<Long> getRandomValues(int size) {

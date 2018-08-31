@@ -32,6 +32,7 @@ import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.NodeRemoved
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.NodeUpdateSchedulerEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.SchedulerEvent;
 import org.apache.mesos.Protos;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.yarn.interceptor.BaseInterceptor;
 import org.apache.myriad.scheduler.yarn.interceptor.InterceptorRegistry;
 import org.apache.myriad.state.SchedulerState;
@@ -69,7 +70,7 @@ public class LeastAMNodesFirstPolicy extends BaseInterceptor implements NodeScal
    * @param taskIDs
    */
   @Override
-  public void apply(List<Protos.TaskID> taskIDs) {
+  public void apply(List<MesosV1.TaskID> taskIDs) {
     if (LOGGER.isDebugEnabled()) {
       for (SchedulerNode node : schedulerNodes.values()) {
         LOGGER.debug("Host {} is running {} containers including {} App Masters", node.getNodeID().getHost(),
@@ -80,9 +81,9 @@ public class LeastAMNodesFirstPolicy extends BaseInterceptor implements NodeScal
     // process HBs from NodeManagers and the state of SchedulerNode objects might change while we
     // are in the middle of sorting them based on the least number of AM containers.
     synchronized (yarnScheduler) {
-      Collections.sort(taskIDs, new Comparator<Protos.TaskID>() {
+      Collections.sort(taskIDs, new Comparator<MesosV1.TaskID>() {
         @Override
-        public int compare(Protos.TaskID t1, Protos.TaskID t2) {
+        public int compare(MesosV1.TaskID t1, MesosV1.TaskID t2) {
           SchedulerNode o1 = schedulerNodes.get(schedulerState.getTask(t1).getHostname());
           SchedulerNode o2 = schedulerNodes.get(schedulerState.getTask(t2).getHostname());
 

@@ -18,29 +18,29 @@
  */
 package org.apache.myriad.scheduler.event;
 
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * mesos status update event
  */
 public class StatusUpdateEvent {
-  private SchedulerDriver driver;
-  private Protos.TaskStatus status;
+  private MesosDriver driver;
+  private MesosV1.TaskStatus status;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 
-  public Protos.TaskStatus getStatus() {
+  public MesosV1.TaskStatus getStatus() {
     return status;
   }
 
-  public void setStatus(Protos.TaskStatus status) {
+  public void setStatus(MesosV1.TaskStatus status) {
     this.status = status;
   }
 

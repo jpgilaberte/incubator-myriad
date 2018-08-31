@@ -25,6 +25,7 @@ import javax.inject.Inject;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.mesos.Protos.Status;
 import org.apache.mesos.Protos.TaskID;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.fgs.OfferLifecycleManager;
 import org.apache.myriad.state.NodeTask;
 import org.apache.myriad.state.SchedulerState;
@@ -67,16 +68,16 @@ public class TaskTerminator implements Runnable {
        * Clone the killable task collection, iterate through all tasks, and 
        * process any pending and/or non-pending tasks
        */
-      Set<TaskID> killableTasks = Sets.newHashSet(schedulerState.getKillableTaskIds());
-      Status driverStatus = driverManager.getDriverStatus();
+      Set<MesosV1.TaskID> killableTasks = Sets.newHashSet(schedulerState.getKillableTaskIds());
+      MesosV1.Status driverStatus = driverManager.getDriverStatus();
 
       //TODO (hokiegeek2) Can the DriverManager be restarted? If not, should the ResourceManager stop?
-      if (Status.DRIVER_RUNNING != driverStatus) {
+      if (MesosV1.Status.DRIVER_RUNNING != driverStatus) {
         LOGGER.warn("Cannot kill tasks because Mesos Driver is not running. Status: {}", driverStatus);
         return;
       }
 
-      for (TaskID taskIdToKill : killableTasks) {
+      for (MesosV1.TaskID taskIdToKill : killableTasks) {
         LOGGER.info("Received task kill request for task: {}", taskIdToKill);
         if (isPendingTask(taskIdToKill)) {
           handlePendingTask(taskIdToKill);
@@ -87,7 +88,7 @@ public class TaskTerminator implements Runnable {
     }
   }
   
-  private void handlePendingTask(TaskID taskId) {
+  private void handlePendingTask(MesosV1.TaskID taskId) {
     /*
      * since task is pending and has not started, simply remove 
      * it from SchedulerState task collection
@@ -95,7 +96,7 @@ public class TaskTerminator implements Runnable {
     schedulerState.removeTask(taskId);
   }
   
-  private void handleNonPendingTask(TaskID taskId) { 
+  private void handleNonPendingTask(MesosV1.TaskID taskId) {
     /*
      * Kill the task and decline additional offers for it, but hold off removing from SchedulerState. 
      * Removal of the killable task must be done following invocation of statusUpdate callback method
@@ -114,7 +115,7 @@ public class TaskTerminator implements Runnable {
     }
   }
 
-  private boolean isPendingTask(TaskID taskId) {
+  private boolean isPendingTask(MesosV1.TaskID taskId) {
     return this.schedulerState.getPendingTaskIds().contains(taskId);
   }
 }

@@ -27,6 +27,7 @@ import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.MyriadExecutorConfiguration;
 import org.apache.myriad.configuration.ServiceConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,13 +50,13 @@ public abstract class ExecutorCommandLineGenerator {
   protected static final String PROPERTY_FORMAT = " -D%s=%s ";
   protected static final String CMD_FORMAT = "echo \"%1$s\" && %1$s";
 
-  protected Protos.CommandInfo staticCommandInfo;
+  protected MesosV1.CommandInfo staticCommandInfo;
 
   protected MyriadConfiguration myriadConfiguration;
   protected MyriadExecutorConfiguration myriadExecutorConfiguration;
   protected YarnConfiguration yarnConfiguration = new YarnConfiguration();
 
-  abstract Protos.CommandInfo generateCommandLine(ServiceResourceProfile profile, ServiceConfiguration serviceConfiguration, Collection<Long> ports);
+  abstract MesosV1.CommandInfo generateCommandLine(ServiceResourceProfile profile, ServiceConfiguration serviceConfiguration, Collection<Long> ports);
 
   protected void appendDistroExtractionCommands(StringBuilder cmdLine) {
     /*
@@ -140,21 +141,28 @@ public abstract class ExecutorCommandLineGenerator {
     }
   }
 
-  protected List<Protos.CommandInfo.URI> getUris() {
-    List<Protos.CommandInfo.URI> uris = new ArrayList<>();
+  protected List<MesosV1.CommandInfo.URI> getUris() {
+    List<MesosV1.CommandInfo.URI> uris = new ArrayList<>();
     if (myriadExecutorConfiguration.getJvmUri().isPresent()) {
       final String jvmRemoteUri = myriadExecutorConfiguration.getJvmUri().get();
       LOGGER.info("Getting JRE distribution from:" + jvmRemoteUri);
-      uris.add(Protos.CommandInfo.URI.newBuilder().setValue(jvmRemoteUri).build());
+
+      MesosV1.CommandInfo.URI uri = new MesosV1.CommandInfo.URI();
+      uri.setValue(jvmRemoteUri);
+      uris.add(uri);
     }
     if (myriadExecutorConfiguration.getConfigUri().isPresent()) {
       String configURI = myriadExecutorConfiguration.getConfigUri().get();
       LOGGER.info("Getting Hadoop configuration from: {}", configURI);
-      uris.add(Protos.CommandInfo.URI.newBuilder().setValue(configURI).build());
+      MesosV1.CommandInfo.URI uri = new MesosV1.CommandInfo.URI();
+      uri.setValue(configURI);
+      uris.add(uri);
     } else if (myriadExecutorConfiguration.getNodeManagerUri().isPresent()) {
       String configURI = getConfigurationUrl();
       LOGGER.info("Getting Hadoop configuration from: {}", configURI);
-      uris.add(Protos.CommandInfo.URI.newBuilder().setValue(configURI).build());
+      MesosV1.CommandInfo.URI uri = new MesosV1.CommandInfo.URI();
+      uri.setValue(configURI);
+      uris.add(uri);
     }
     if (myriadExecutorConfiguration.getNodeManagerUri().isPresent()) {
       //Both FrameworkUser and FrameworkSuperuser to get all of the directory permissions correct.
@@ -164,7 +172,10 @@ public abstract class ExecutorCommandLineGenerator {
       }
       String nodeManagerUri = myriadExecutorConfiguration.getNodeManagerUri().get();
       LOGGER.info("Getting Hadoop distribution from: {}", nodeManagerUri);
-      uris.add(Protos.CommandInfo.URI.newBuilder().setValue(nodeManagerUri).setExtract(false).build());
+      MesosV1.CommandInfo.URI uri = new MesosV1.CommandInfo.URI();
+      uri.setValue(nodeManagerUri);
+      uri.setExtract(false);
+      uris.add(uri);
     }
     return uris;
   }

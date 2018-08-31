@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import org.apache.mesos.Protos.TaskID;
 import org.apache.mesos.Protos.TaskState;
 import org.apache.mesos.Protos.TaskStatus;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.event.StatusUpdateEvent;
 import org.apache.myriad.scheduler.fgs.OfferLifecycleManager;
 import org.apache.myriad.state.NodeTask;
@@ -63,9 +64,9 @@ public class StatusUpdateEventHandler implements EventHandler<StatusUpdateEvent>
    */
   @Override
   public void onEvent(StatusUpdateEvent event, long sequence, boolean endOfBatch) throws Exception {
-    TaskStatus status = event.getStatus();
+    MesosV1.TaskStatus status = event.getStatus();
     this.schedulerState.updateTask(status);
-    TaskID taskId = status.getTaskId();
+    MesosV1.TaskID taskId = status.getTask_id();
     NodeTask task = schedulerState.getTask(taskId);
     if (task == null) {
       LOGGER.warn("Task: {} not found, status: {}", taskId.getValue(), status.getState());
@@ -73,7 +74,7 @@ public class StatusUpdateEventHandler implements EventHandler<StatusUpdateEvent>
       return;
     }
     LOGGER.info("Status Update for task: {} | state: {}", taskId.getValue(), status.getState());
-    TaskState state = status.getState();
+    MesosV1.TaskState state = status.getState();
 
     switch (state) {
       case TASK_STAGING:
@@ -103,7 +104,7 @@ public class StatusUpdateEventHandler implements EventHandler<StatusUpdateEvent>
     }
   }
 
-  private void cleanupFailedTask(TaskID taskId, NodeTask task, String stopReason) {
+  private void cleanupFailedTask(MesosV1.TaskID taskId, NodeTask task, String stopReason) {
     offerLifecycleManager.declineOutstandingOffers(task.getHostname());
     /*
      * Remove the task from SchedulerState if the task is killable.  Otherwise,
@@ -118,12 +119,12 @@ public class StatusUpdateEventHandler implements EventHandler<StatusUpdateEvent>
     }  
   }
   
-  private void cleanupTask(TaskID taskId, NodeTask task, String stopReason) {
+  private void cleanupTask(MesosV1.TaskID taskId, NodeTask task, String stopReason) {
     offerLifecycleManager.declineOutstandingOffers(task.getHostname());
     schedulerState.removeTask(taskId);    
     LOGGER.info("Removed {} task with id {}", stopReason, taskId);
   }
-  private boolean taskIsKillable(TaskID taskId) {
+  private boolean taskIsKillable(MesosV1.TaskID taskId) {
     return schedulerState.getKillableTaskIds().contains(taskId);
   }
 }

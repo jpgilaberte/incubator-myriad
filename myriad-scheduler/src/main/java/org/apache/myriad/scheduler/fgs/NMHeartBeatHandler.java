@@ -36,6 +36,7 @@ import org.apache.hadoop.yarn.util.resource.Resources;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.Offer;
 import org.apache.myriad.configuration.NodeManagerConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.MyriadDriver;
 import org.apache.myriad.scheduler.SchedulerUtils;
 import org.apache.myriad.scheduler.yarn.interceptor.BaseInterceptor;
@@ -163,8 +164,8 @@ public class NMHeartBeatHandler extends BaseInterceptor {
   @VisibleForTesting
   protected Resource getNewResourcesOfferedByMesos(String hostname) {
     OfferFeed feed = offerLifecycleMgr.getOfferFeed(hostname);
-    List<Offer> offers = new ArrayList<>();
-    Protos.Offer offer;
+    List<MesosV1.Offer> offers = new ArrayList<>();
+    MesosV1.Offer offer;
         
     while ((offer = feed.poll()) != null) {
       offers.add(offer);     

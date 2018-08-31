@@ -18,20 +18,20 @@
  */
 package org.apache.myriad.scheduler.event;
 
-import org.apache.mesos.SchedulerDriver;
+import org.apache.myriad.driver.MesosDriver;
 
 /**
  * Error event in the system
  */
 public class ErrorEvent {
-  private SchedulerDriver driver;
+  private MesosDriver driver;
   private String message;
 
-  public SchedulerDriver getDriver() {
+  public MesosDriver getDriver() {
     return driver;
   }
 
-  public void setDriver(SchedulerDriver driver) {
+  public void setDriver(MesosDriver driver) {
     this.driver = driver;
   }
 

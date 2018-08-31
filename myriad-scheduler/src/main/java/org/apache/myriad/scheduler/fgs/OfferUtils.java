@@ -22,6 +22,7 @@ import java.util.Collection;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.Offer;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Utility class that provides useful methods that deal with Mesos offers.
@@ -34,12 +35,12 @@ public class OfferUtils {
    * @param offers collection of mesos offers
    * @return a single resource object equivalent to the cumulative sum of mesos offers
    */
-  public static Resource getYarnResourcesFromMesosOffers(Collection<Offer> offers) {
+  public static Resource getYarnResourcesFromMesosOffers(Collection<MesosV1.Offer> offers) {
     double cpus = 0.0;
     double mem = 0.0;
 
-    for (Protos.Offer offer : offers) {
-      for (Protos.Resource resource : offer.getResourcesList()) {
+    for (MesosV1.Offer offer : offers) {
+      for (MesosV1.Resource resource : offer.getResources()) {
         if (resource.getName().equalsIgnoreCase("cpus")) {
           cpus += resource.getScalar().getValue();
         } else if (resource.getName().equalsIgnoreCase("mem")) {

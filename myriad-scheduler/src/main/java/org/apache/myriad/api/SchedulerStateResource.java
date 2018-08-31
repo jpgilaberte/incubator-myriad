@@ -31,6 +31,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.mesos.Protos;
 import org.apache.myriad.api.model.GetSchedulerStateResponse;
 import org.apache.myriad.configuration.MyriadConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Defines the REST API for the current state of Myriad
@@ -54,12 +55,12 @@ public class SchedulerStateResource {
         state.getStagingTaskIds()), toStringCollection(state.getActiveTaskIds()), toStringCollection(state.getKillableTaskIds()));
   }
 
-  private Collection<String> toStringCollection(Collection<Protos.TaskID> collection) {
+  private Collection<String> toStringCollection(Collection<MesosV1.TaskID> collection) {
     if (CollectionUtils.isEmpty(collection)) {
       return Collections.emptyList();
     }
     Collection<String> returnCollection = new ArrayList<>();
-    for (Protos.TaskID task : collection) {
+    for (MesosV1.TaskID task : collection) {
       returnCollection.add(task.getValue());
     }
 
