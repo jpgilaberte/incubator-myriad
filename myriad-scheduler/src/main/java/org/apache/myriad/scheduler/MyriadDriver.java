@@ -19,9 +19,6 @@
 package org.apache.myriad.scheduler;
 
 import javax.inject.Inject;
-import org.apache.mesos.Protos.Status;
-import org.apache.mesos.Protos.TaskID;
-import org.apache.mesos.SchedulerDriver;
 import org.apache.myriad.driver.MesosDriver;
 import org.apache.myriad.driver.model.MesosV1;
 import org.slf4j.Logger;

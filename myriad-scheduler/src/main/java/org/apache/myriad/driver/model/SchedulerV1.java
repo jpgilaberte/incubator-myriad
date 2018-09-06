@@ -695,7 +695,7 @@ public class SchedulerV1 {
         public static class Acknowledge {
              MesosV1.AgentID agent_id ;
              MesosV1.TaskID task_id ;
-             byte[] uuid ;
+             String uuid ;
 
             public MesosV1.AgentID getAgent_id() {
                 return agent_id;
@@ -713,11 +713,11 @@ public class SchedulerV1 {
                 this.task_id = task_id;
             }
 
-            public byte[] getUuid() {
+            public String getUuid() {
                 return uuid;
             }
 
-            public void setUuid(byte[] uuid) {
+            public void setUuid(String uuid) {
                 this.uuid = uuid;
             }
         }

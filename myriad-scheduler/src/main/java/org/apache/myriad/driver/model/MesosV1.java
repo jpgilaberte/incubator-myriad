@@ -4017,7 +4017,7 @@ public class MesosV1 {
         // TODO(bmahler): This is currently overwritten in the scheduler
         // driver and executor driver, but executors will need to set this
         // to a valid RFC-4122 UUID if using the HTTP API.
-        byte[] uuid;
+        String uuid;
 
         // Describes whether the task has been determined to be healthy (true) or
         // unhealthy (false) according to the `health_check` field in `TaskInfo`.
@@ -4130,11 +4130,11 @@ public class MesosV1 {
             this.timestamp = timestamp;
         }
 
-        public byte[] getUuid() {
+        public String getUuid() {
             return uuid;
         }
 
-        public void setUuid(byte[] uuid) {
+        public void setUuid(String uuid) {
             this.uuid = uuid;
         }
 

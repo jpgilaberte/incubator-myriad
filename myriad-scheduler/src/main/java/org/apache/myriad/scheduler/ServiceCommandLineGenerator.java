@@ -20,15 +20,13 @@ package org.apache.myriad.scheduler;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.ServiceConfiguration;
+import org.apache.myriad.driver.model.MesosV1;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 /**
  * CommandLineGenerator for any aux service launched by Myriad as binary distro
@@ -46,10 +44,11 @@ public class ServiceCommandLineGenerator extends ExecutorCommandLineGenerator {
   }
 
   protected void generateStaticCommandLine() {
-    Protos.CommandInfo.Builder builder = Protos.CommandInfo.newBuilder();
-    builder.addAllUris(getUris());
+    MesosV1.CommandInfo builder = new MesosV1.CommandInfo();
+
+    builder.setUris(getUris());
     builder.setUser(getUser());
-    staticCommandInfo = builder.build();
+    staticCommandInfo = builder;
 
     StringBuilder cmdLine = new StringBuilder();
     appendDistroExtractionCommands(cmdLine);
@@ -58,25 +57,27 @@ public class ServiceCommandLineGenerator extends ExecutorCommandLineGenerator {
   }
 
   @Override
-  public Protos.CommandInfo generateCommandLine(ServiceResourceProfile profile,
+  public MesosV1.CommandInfo generateCommandLine(ServiceResourceProfile profile,
                                                 ServiceConfiguration serviceConfiguration,
                                                 Collection<Long> ports) {
-    Protos.CommandInfo.Builder builder = Protos.CommandInfo.newBuilder();
-    builder.mergeFrom(staticCommandInfo);
+    MesosV1.CommandInfo builder = staticCommandInfo;
     builder.setValue(String.format(CMD_FORMAT, baseCmd + " " + serviceConfiguration.getCommand().get()));
     builder.setEnvironment(generateEnvironment(profile, ports));
-    return builder.build();
+    return builder;
   }
 
-  protected Protos.Environment generateEnvironment(ServiceResourceProfile serviceResourceProfile, Collection<Long> ports) {
+  protected MesosV1.Environment generateEnvironment(ServiceResourceProfile serviceResourceProfile, Collection<Long> ports) {
     Map<String, String> yarnEnv = myriadConfiguration.getYarnEnvironment();
-    Protos.Environment.Builder builder = Protos.Environment.newBuilder();
+    MesosV1.Environment builder = new MesosV1.Environment();
 
-    builder.addAllVariables(Iterables.transform(yarnEnv.entrySet(), new Function<Map.Entry<String, String>, Protos.Environment.Variable>() {
-      public Protos.Environment.Variable apply(Map.Entry<String, String> x) {
-        return Protos.Environment.Variable.newBuilder().setName(x.getKey()).setValue(x.getValue()).build();
+    builder.setVariables(Lists.newArrayList(Iterables.transform(yarnEnv.entrySet(), new Function<Map.Entry<String, String>, MesosV1.Environment.Variable>() {
+      public MesosV1.Environment.Variable apply(Map.Entry<String, String> x) {
+        MesosV1.Environment.Variable var = new MesosV1.Environment.Variable();
+        var.setName(x.getKey());
+        var.setValue(x.getValue());
+        return var;
       }
-    }));
+    })));
 
     StringBuilder hadoopOpts = new StringBuilder();
     String rmHostName = System.getProperty(KEY_YARN_RM_HOSTNAME);
@@ -99,12 +100,14 @@ public class ServiceCommandLineGenerator extends ExecutorCommandLineGenerator {
     if (myriadConfiguration.getYarnEnvironment().containsKey(ENV_HADOOP_OPTS)) {
       hadoopOpts.append(" ").append(yarnEnv.get(ENV_HADOOP_OPTS));
     }
-    builder.addAllVariables(Collections.singleton(
-            Protos.Environment.Variable.newBuilder()
-                .setName(ENV_HADOOP_OPTS)
-                .setValue(hadoopOpts.toString()).build())
-    );
-    return builder.build();
+
+    MesosV1.Environment.Variable var = new MesosV1.Environment.Variable();
+    var.setName(ENV_HADOOP_OPTS);
+    var.setValue(hadoopOpts.toString());
+
+    builder.setVariables(new ArrayList(Collections.singleton(var)));
+
+    return builder;
   }
 
 }

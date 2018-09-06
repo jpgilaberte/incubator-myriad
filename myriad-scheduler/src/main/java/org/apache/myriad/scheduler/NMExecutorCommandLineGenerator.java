@@ -20,22 +20,18 @@
 package org.apache.myriad.scheduler;
 
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-
+import java.util.*;
 
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.ServiceConfiguration;
 
-import org.apache.mesos.Protos.CommandInfo;
+import org.apache.myriad.driver.model.MesosV1;
 
 /**
  * Implementation assumes NM binaries already deployed
@@ -59,35 +55,38 @@ public class NMExecutorCommandLineGenerator extends ExecutorCommandLineGenerator
   }
 
   @Override
-  CommandInfo generateCommandLine(ServiceResourceProfile profile,
-                                  ServiceConfiguration serviceConfiguration, Collection<Long> ports) {
-    CommandInfo.Builder builder = CommandInfo.newBuilder();
-    builder.mergeFrom(staticCommandInfo);
+  MesosV1.CommandInfo generateCommandLine(ServiceResourceProfile profile,
+                                          ServiceConfiguration serviceConfiguration, Collection<Long> ports) {
+    MesosV1.CommandInfo builder = staticCommandInfo;
+
     builder.setEnvironment(generateEnvironment(profile, ports));
     builder.setUser(getUser());
-    return builder.build();
+    return builder;
   }
 
   protected void generateStaticCommandLine() {
-    CommandInfo.Builder builder = CommandInfo.newBuilder();
+    MesosV1.CommandInfo builder = new MesosV1.CommandInfo();
     StringBuilder cmdLine = new StringBuilder();
     appendCgroupsCmds(cmdLine);
     appendDistroExtractionCommands(cmdLine);
     appendUserSudo(cmdLine);
     cmdLine.append(YARN_NM_CMD);
     builder.setValue(String.format(CMD_FORMAT, cmdLine.toString()));
-    builder.addAllUris(getUris());
-    staticCommandInfo = builder.build();
+    builder.setUris(getUris());
+    staticCommandInfo = builder;
   }
 
-  protected Protos.Environment generateEnvironment(ServiceResourceProfile profile, Collection<Long> ports) {
+  protected MesosV1.Environment generateEnvironment(ServiceResourceProfile profile, Collection<Long> ports) {
     Map<String, String> yarnEnv = myriadConfiguration.getYarnEnvironment();
-    Protos.Environment.Builder builder = Protos.Environment.newBuilder();
-    builder.addAllVariables(Iterables.transform(yarnEnv.entrySet(), new Function<Map.Entry<String, String>, Protos.Environment.Variable>() {
-      public Protos.Environment.Variable apply(Map.Entry<String, String> x) {
-        return Protos.Environment.Variable.newBuilder().setName(x.getKey()).setValue(x.getValue()).build();
+    MesosV1.Environment builder = new MesosV1.Environment();
+    builder.setVariables(Lists.newArrayList(Iterables.transform(yarnEnv.entrySet(), new Function<Map.Entry<String, String>, MesosV1.Environment.Variable>() {
+      public MesosV1.Environment.Variable apply(Map.Entry<String, String> x) {
+        MesosV1.Environment.Variable var = new MesosV1.Environment.Variable();
+        var.setName(x.getKey());
+        var.setValue(x.getValue());
+        return var;
       }
-    }));
+    })));
 
     StringBuilder yarnOpts = new StringBuilder();
     String rmHostName = System.getProperty(KEY_YARN_RM_HOSTNAME);
@@ -121,12 +120,12 @@ public class NMExecutorCommandLineGenerator extends ExecutorCommandLineGenerator
     if (myriadConfiguration.getYarnEnvironment().containsKey(ENV_YARN_NODEMANAGER_OPTS)) {
       yarnOpts.append(" ").append(yarnEnv.get(ENV_YARN_NODEMANAGER_OPTS));
     }
-    builder.addAllVariables(Collections.singleton(
-            Protos.Environment.Variable.newBuilder()
-                .setName(ENV_YARN_NODEMANAGER_OPTS)
-                .setValue(yarnOpts.toString()).build())
-    );
-    return builder.build();
+
+    MesosV1.Environment.Variable var = new MesosV1.Environment.Variable();
+            var.setName(ENV_YARN_NODEMANAGER_OPTS);
+            var.setValue(yarnOpts.toString());
+    builder.getVariables().add(var);
+    return builder;
   }
 
   protected void appendCgroupsCmds(StringBuilder cmdLine) {

@@ -19,8 +19,6 @@
 package org.apache.myriad.scheduler.event.handlers;
 
 import com.lmax.disruptor.EventHandler;
-import org.apache.mesos.Protos.ExecutorID;
-import org.apache.mesos.Protos.SlaveID;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.event.FrameworkMessageEvent;
 import org.slf4j.Logger;

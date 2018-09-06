@@ -24,8 +24,6 @@ import java.util.Date;
 import javax.inject.Inject;
 
 import com.google.common.collect.Lists;
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.driver.MesosDriver;
 import org.apache.myriad.driver.model.MesosV1;

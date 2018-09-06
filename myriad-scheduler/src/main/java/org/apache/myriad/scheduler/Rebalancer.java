@@ -20,7 +20,6 @@ package org.apache.myriad.scheduler;
 
 import java.util.Set;
 import javax.inject.Inject;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.NodeManagerConfiguration;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.state.SchedulerState;

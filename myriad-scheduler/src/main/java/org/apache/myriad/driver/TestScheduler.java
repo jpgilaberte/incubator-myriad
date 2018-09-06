@@ -14,10 +14,10 @@ public class TestScheduler implements SchedulerInterfaceV1 {
 delete
 */
     public static void main(String[] args){
-        MesosDriverHttpApi m = new MesosDriverHttpApi(new TestScheduler(), createFarmeworkInfo(), Arrays.asList("127.0.0.1:5050"));
+        MesosDriverHttpApi m = new MesosDriverHttpApi(new TestScheduler(), createFarmeworkInfo(), Arrays.asList("100.0.10.101:5050"));
         try {
             m.start();
-            m.stop(true);
+            //m.stop(true);
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

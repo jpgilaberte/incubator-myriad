@@ -28,7 +28,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.mesos.Protos;
 import org.apache.myriad.api.model.GetSchedulerStateResponse;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.driver.model.MesosV1;

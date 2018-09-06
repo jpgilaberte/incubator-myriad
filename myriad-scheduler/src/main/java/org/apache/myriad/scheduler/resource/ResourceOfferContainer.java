@@ -19,7 +19,6 @@
 package org.apache.myriad.scheduler.resource;
 
 import com.google.common.base.Preconditions;
-import org.apache.mesos.Protos;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.ServiceResourceProfile;
 import org.apache.myriad.scheduler.constraints.Constraint;

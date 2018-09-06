@@ -18,21 +18,8 @@
  */
 package org.apache.myriad;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.mesos.MesosSchedulerDriver;
-import org.apache.mesos.Protos.Credential;
-import org.apache.mesos.Protos.FrameworkID;
-import org.apache.mesos.Protos.FrameworkInfo;
-import org.apache.mesos.Protos.FrameworkInfo.Builder;
-import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.state.State;
-import org.apache.mesos.state.ZooKeeperState;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.driver.MesosDriver;
 import org.apache.myriad.driver.MesosDriverHttpApi;
@@ -43,12 +30,10 @@ import org.apache.myriad.state.SchedulerState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Optional;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.protobuf.ByteString;
 
 /**
  * Guice Module for Mesos objects.
@@ -115,9 +100,9 @@ public class MesosModule extends AbstractModule {
     //}
   }
 
-  @Provides
-  @Singleton
-  State providesStateStore(MyriadConfiguration cfg) {
-    return new ZooKeeperState(cfg.getZkServers(), cfg.getZkTimeout(), TimeUnit.MILLISECONDS, "/myriad/" + cfg.getFrameworkName());
-  }
+//  @Provides
+//  @Singleton
+//  State providesStateStore(MyriadConfiguration cfg) {
+//    return new ZooKeeperState(cfg.getZkServers(), cfg.getZkTimeout(), TimeUnit.MILLISECONDS, "/myriad/" + cfg.getFrameworkName());
+//  }
 }

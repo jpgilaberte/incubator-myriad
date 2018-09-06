@@ -45,6 +45,8 @@ public class MesosDriverHttpApiCommonService {
                 uri = new URI("http://" + mesosMaster + "/api/v1/scheduler");
                 response = call.validateResponse(connection(httpClient, httpContext, call.createRequest(uri)));
                 setMesosLeader(driver, httpContext, uri);
+                //TODO:review
+                if (response != null) break;
             } catch (Exception e) {
                 LOGGER.error("Master connection error: ", e.getMessage());
                 driver.getScheduler().error(driver, "Master connection error: " + e.getMessage());

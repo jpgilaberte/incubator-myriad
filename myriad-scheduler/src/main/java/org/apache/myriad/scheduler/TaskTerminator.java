@@ -23,8 +23,6 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.mesos.Protos.Status;
-import org.apache.mesos.Protos.TaskID;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.fgs.OfferLifecycleManager;
 import org.apache.myriad.state.NodeTask;
@@ -82,7 +80,8 @@ public class TaskTerminator implements Runnable {
         if (isPendingTask(taskIdToKill)) {
           handlePendingTask(taskIdToKill);
         } else {
-          handleNonPendingTask(taskIdToKill);
+          NodeTask nodeTask = schedulerState.getTask(taskIdToKill);
+          handleNonPendingTask(taskIdToKill, nodeTask.getSlaveId());
         }
       }
     }
@@ -96,19 +95,19 @@ public class TaskTerminator implements Runnable {
     schedulerState.removeTask(taskId);
   }
   
-  private void handleNonPendingTask(MesosV1.TaskID taskId) {
+  private void handleNonPendingTask(MesosV1.TaskID taskId, MesosV1.AgentID agentId) {
     /*
      * Kill the task and decline additional offers for it, but hold off removing from SchedulerState. 
      * Removal of the killable task must be done following invocation of statusUpdate callback method
      * which constitutes acknowledgement from Mesos that the kill task request succeeded.
      */
-    Status status = this.driverManager.kill(taskId);
+    MesosV1.Status status = this.driverManager.kill(taskId, agentId, null);
     NodeTask task = schedulerState.getTask(taskId);
 
     if (task != null) {
       offerLifeCycleManager.declineOutstandingOffers(task.getHostname());
     } 
-    if (status.equals(Status.DRIVER_RUNNING)) {
+    if (status.equals(MesosV1.Status.DRIVER_RUNNING)) {
       LOGGER.info("Kill request for {} was submitted to a running SchedulerDriver", taskId);
     } else {
       LOGGER.warn("Kill task request for {} submitted to non-running SchedulerDriver, may fail", taskId);

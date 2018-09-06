@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.Set;
 import org.apache.hadoop.yarn.server.resourcemanager.rmcontainer.RMContainer;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.SchedulerNode;
-import org.apache.mesos.Protos;
 import org.apache.myriad.driver.model.MesosV1;
 
 /**

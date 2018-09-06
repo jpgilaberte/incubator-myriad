@@ -20,7 +20,7 @@ package org.apache.myriad.health;
 
 import com.codahale.metrics.health.HealthCheck;
 import javax.inject.Inject;
-import org.apache.mesos.Protos.Status;
+import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.MyriadDriverManager;
 
 /**
@@ -38,8 +38,8 @@ public class MesosDriverHealthCheck extends HealthCheck {
 
   @Override
   protected Result check() throws Exception {
-    Status driverStatus = driverManager.getDriverStatus();
-    if (Status.DRIVER_RUNNING == driverStatus) {
+    MesosV1.Status driverStatus = driverManager.getDriverStatus();
+    if (MesosV1.Status.DRIVER_RUNNING == driverStatus) {
       return Result.healthy();
     } else {
       return Result.unhealthy("Driver status: " + driverStatus);

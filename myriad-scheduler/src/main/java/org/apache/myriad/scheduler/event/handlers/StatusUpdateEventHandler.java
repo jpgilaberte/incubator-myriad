@@ -20,9 +20,6 @@ package org.apache.myriad.scheduler.event.handlers;
 
 import com.lmax.disruptor.EventHandler;
 import javax.inject.Inject;
-import org.apache.mesos.Protos.TaskID;
-import org.apache.mesos.Protos.TaskState;
-import org.apache.mesos.Protos.TaskStatus;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.event.StatusUpdateEvent;
 import org.apache.myriad.scheduler.fgs.OfferLifecycleManager;

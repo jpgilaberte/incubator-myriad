@@ -29,12 +29,10 @@ import org.apache.hadoop.yarn.server.api.AuxiliaryService;
 import org.apache.hadoop.yarn.server.api.ContainerInitializationContext;
 import org.apache.hadoop.yarn.server.api.ContainerTerminationContext;
 import org.apache.mesos.MesosExecutorDriver;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.Status;
-import org.apache.mesos.Protos.TaskState;
-import org.apache.mesos.Protos.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.mesos.Protos.*;
 
 /**
  * Auxillary service wrapper for MyriadExecutor
@@ -104,7 +102,7 @@ public class MyriadExecutorAuxService extends AuxiliaryService {
   }
 
   private void sendStatus(ContainerId containerId, TaskState taskState) {
-    Protos.TaskID taskId = Protos.TaskID.newBuilder().setValue(YARN_CONTAINER_TASK_ID_PREFIX + containerId.toString()).build();
+    TaskID taskId = TaskID.newBuilder().setValue(YARN_CONTAINER_TASK_ID_PREFIX + containerId.toString()).build();
 
     TaskStatus status = TaskStatus.newBuilder().setTaskId(taskId).setState(taskState).build();
     driver.sendStatusUpdate(status);

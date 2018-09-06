@@ -49,7 +49,7 @@ rm build/CMakeCache.txt
 ## Master
 
 ```
-cd /home/vagrant/mesos.git/build
+cd /home/vagrant/mesos.git/buildjps
 sudo ./bin/mesos-master.sh --ip=100.0.10.101 --work_dir=/var/lib/mesos
 ```
 

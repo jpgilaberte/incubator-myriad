@@ -39,7 +39,7 @@ public class MesosDriverHttpApi implements MesosDriver{
                 LOGGER.info("Aborting driver");
                 return driverStatus;
             }
-            threadStream = new Thread(new MesosDriverHttpApiStream(this, inputStream));
+            threadStream = new Thread(new MesosDriverHttpApiStream(this, inputStream), "STREAM_API");
             threadStream.start();
             driverStatus = MesosV1.Status.DRIVER_RUNNING;
             LOGGER.info("Driver started ", driverStatus);

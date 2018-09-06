@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.hadoop.yarn.server.resourcemanager.RMContext;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.Status;
 import org.apache.myriad.configuration.MyriadBadConfigurationException;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.NodeManagerConfiguration;

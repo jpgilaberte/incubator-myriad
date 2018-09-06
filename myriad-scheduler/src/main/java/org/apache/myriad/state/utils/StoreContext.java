@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.TaskID;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.state.NodeTask;
 

@@ -20,8 +20,6 @@ package org.apache.myriad.scheduler.fgs;
 
 import java.util.Collection;
 import org.apache.hadoop.yarn.api.records.Resource;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.Offer;
 import org.apache.myriad.driver.model.MesosV1;
 
 /**

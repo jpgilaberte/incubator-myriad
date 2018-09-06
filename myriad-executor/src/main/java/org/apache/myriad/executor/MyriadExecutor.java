@@ -22,16 +22,9 @@ import java.nio.charset.Charset;
 import java.util.Set;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.ExecutorInfo;
-import org.apache.mesos.Protos.FrameworkInfo;
-import org.apache.mesos.Protos.SlaveInfo;
-import org.apache.mesos.Protos.TaskID;
-import org.apache.mesos.Protos.TaskInfo;
-import org.apache.mesos.Protos.TaskState;
-import org.apache.mesos.Protos.TaskStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.mesos.Protos.*;
 
 /**
  * Myriad's Executor
@@ -79,7 +72,7 @@ public class MyriadExecutor implements Executor {
       // currently running 
       synchronized (containerIds) {
         for (String containerId : containerIds) {
-          Protos.TaskID containerTaskId = Protos.TaskID.newBuilder().setValue(
+          TaskID containerTaskId = TaskID.newBuilder().setValue(
               MyriadExecutorAuxService.YARN_CONTAINER_TASK_ID_PREFIX + containerId).build();
           status = TaskStatus.newBuilder().setTaskId(containerTaskId).setState(TaskState.TASK_KILLED).build();
           driver.sendStatusUpdate(status);

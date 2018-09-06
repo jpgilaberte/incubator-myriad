@@ -31,7 +31,6 @@ import org.apache.hadoop.yarn.server.resourcemanager.scheduler.SchedulerNode;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.NodeRemovedSchedulerEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.NodeUpdateSchedulerEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.event.SchedulerEvent;
-import org.apache.mesos.Protos;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.yarn.interceptor.BaseInterceptor;
 import org.apache.myriad.scheduler.yarn.interceptor.InterceptorRegistry;

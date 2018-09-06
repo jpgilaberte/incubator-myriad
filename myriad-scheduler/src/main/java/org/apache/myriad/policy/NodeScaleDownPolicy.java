@@ -19,7 +19,6 @@
 package org.apache.myriad.policy;
 
 import java.util.List;
-import org.apache.mesos.Protos;
 import org.apache.myriad.driver.model.MesosV1;
 
 /**

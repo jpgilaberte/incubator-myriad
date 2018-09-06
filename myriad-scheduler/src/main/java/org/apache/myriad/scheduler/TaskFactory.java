@@ -22,7 +22,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.MyriadContainerConfiguration;
 import org.apache.myriad.configuration.MyriadDockerConfiguration;

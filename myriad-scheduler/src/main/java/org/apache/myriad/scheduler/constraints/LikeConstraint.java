@@ -21,7 +21,6 @@ package org.apache.myriad.scheduler.constraints;
 import com.google.gson.Gson;
 import java.util.Collection;
 import java.util.regex.Pattern;
-import org.apache.mesos.Protos.Attribute;
 import org.apache.myriad.driver.model.MesosV1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

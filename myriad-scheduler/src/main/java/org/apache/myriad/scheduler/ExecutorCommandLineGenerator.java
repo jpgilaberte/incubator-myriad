@@ -23,7 +23,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
-import org.apache.mesos.Protos;
 import org.apache.myriad.configuration.MyriadConfiguration;
 import org.apache.myriad.configuration.MyriadExecutorConfiguration;
 import org.apache.myriad.configuration.ServiceConfiguration;

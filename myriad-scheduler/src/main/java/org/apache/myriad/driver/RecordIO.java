@@ -14,7 +14,8 @@ public class RecordIO {
     }
 
     public String read() throws IOException {
-        int recordIoLength = new Integer(br.readLine());
+        String res = br.readLine();
+        int recordIoLength = new Integer(res);
         char[] recordIOBuffer = new char[recordIoLength];
         br.read(recordIOBuffer);
         return new String(recordIOBuffer);

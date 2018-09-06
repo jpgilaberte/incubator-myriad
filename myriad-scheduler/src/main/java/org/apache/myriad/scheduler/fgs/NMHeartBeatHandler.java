@@ -33,8 +33,6 @@ import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNodeEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.rmnode.RMNodeStatusEvent;
 import org.apache.hadoop.yarn.server.resourcemanager.scheduler.AbstractYarnScheduler;
 import org.apache.hadoop.yarn.util.resource.Resources;
-import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.Offer;
 import org.apache.myriad.configuration.NodeManagerConfiguration;
 import org.apache.myriad.driver.model.MesosV1;
 import org.apache.myriad.scheduler.MyriadDriver;

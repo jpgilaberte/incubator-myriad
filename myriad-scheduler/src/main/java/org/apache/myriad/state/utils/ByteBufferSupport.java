@@ -172,7 +172,7 @@ public class ByteBufferSupport {
    */
   public static MesosV1.TaskID toTaskId(ByteBuffer bb) {
     try {
-      return MesosV1.TaskID.parseFrom(getBytes(bb, bb.getInt()));
+      return (MesosV1.TaskID)byteArrayToObject(getBytes(bb, bb.getInt()));
     } catch (Exception e) {
       throw new RuntimeException("Failed to parse Task ID", e);
     }
@@ -186,7 +186,7 @@ public class ByteBufferSupport {
    */
   public static MesosV1.FrameworkID toFrameworkID(ByteBuffer bb) {
     try {
-      return MesosV1.FrameworkID.parseFrom(getBytes(bb, bb.getInt()));
+      return (MesosV1.FrameworkID)byteArrayToObject(getBytes(bb, bb.getInt()));
     } catch (Exception e) {
       throw new RuntimeException("Failed to parse Framework ID", e);
     }
@@ -313,7 +313,7 @@ public class ByteBufferSupport {
     int size = bb.getInt();
     if (size > 0) {
       try {
-        return MesosV1.AgentID.parseFrom(getBytes(bb, size));
+        return (MesosV1.AgentID) byteArrayToObject(getBytes(bb, size));
       } catch (Exception e) {
         throw new RuntimeException("ByteBuffer not in expected format," + " failed to parse SlaveId bytes", e);
       }
@@ -326,7 +326,7 @@ public class ByteBufferSupport {
     int size = bb.getInt();
     if (size > 0) {
       try {
-        return MesosV1.TaskStatus.parseFrom(getBytes(bb, size));
+        return (MesosV1.TaskStatus) byteArrayToObject(getBytes(bb, size));
       } catch (Exception e) {
         throw new RuntimeException("ByteBuffer not in expected format," + " failed to parse TaskStatus bytes", e);
       }
@@ -339,7 +339,7 @@ public class ByteBufferSupport {
     int size = bb.getInt();
     if (size > 0) {
       try {
-        return MesosV1.ExecutorInfo.parseFrom(getBytes(bb, size));
+        return (MesosV1.ExecutorInfo) byteArrayToObject(getBytes(bb, size));
       } catch (Exception e) {
         throw new RuntimeException("ByteBuffer not in expected format," + " failed to parse ExecutorInfo bytes", e);
       }
